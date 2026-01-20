@@ -1,201 +1,376 @@
-import React, { useState, useEffect } from 'react';
-import type { ChangeEvent, FormEvent } from 'react';
-import CreateSubmit from './buttons/CreateSubmit';
-import ResetFormat from './buttons/ResetFormat';
+import React, { useState, useEffect, useMemo } from 'react';
+import {getEventSlot, sendSession, deleteSessionService, getSessions} from "../services/sessionService"
+import {getSpeakersAll} from "../services/speakerService"
+
+import type {EventWithSlots, responseSpeaker} from "../types/index"
 
 // Definir tipos
 type SessionData = {
-  id: string; // Para identificación interna
+  id: string;
+  backendId?: string;
   event_id: string;
   time_slot_id: string;
   title: string;
   capacity: string;
   description: string;
+  speaker_id: string;   // ✅ AQUÍ
+  isDirty?: boolean;
 };
 
+type SessionDataWithSpeaker = {
+  id: string; // ID interno para la vista
+  backendId?: string; // ID asignado por el backend
+  event_id: string;
+  time_slot_id: string;
+  title: string;
+  capacity: string;
+  description: string;
+  speaker:string;
+  isDirty?: boolean;
+
+};
 type SessionFormErrors = {
-  global?: string;
-  sessions?: Record<string, {
-    event_id?: string;
-    time_slot_id?: string;
-    title?: string;
-    capacity?: string;
-    description?: string;
-  }>;
+  event_id?: string;
+  time_slot_id?: string;
+  title?: string;
+  capacity?: string;
+  description?: string;
 };
 
-// Mock de datos (reemplazar con llamadas API)
-const mockEvents = [
-  { id: 'event-1', title: 'Conferencia Anual 2024' },
-  { id: 'event-2', title: 'Workshop de Innovación' },
-  { id: 'event-3', title: 'Reunión de Accionistas Q4' },
-];
 
-const mockTimeSlots = [
-  { id: 'slot-1', time_range: '09:00 - 10:30' },
-  { id: 'slot-2', time_range: '11:00 - 12:30' },
-  { id: 'slot-3', time_range: '14:00 - 15:30' },
-  { id: 'slot-4', time_range: '16:00 - 17:30' },
+
+const mockExistingSessions: SessionData[] = [
+  {
+    id: 'session-1',
+    backendId: 'backend-session-1',
+    event_id: 'event-1',
+    time_slot_id: 'slot-1',
+    title: 'Sesión de Apertura',
+    capacity: '100',
+    description: 'Introducción y bienvenida al evento',
+    
+    isDirty: false,
+  },
+  {
+    id: 'session-2',
+    backendId: 'backend-session-2',
+    event_id: 'event-1',
+    time_slot_id: 'slot-2',
+    title: 'Workshop Práctico',
+    capacity: '50',
+    description: 'Taller interactivo sobre nuevas tecnologías',
+  
+    isDirty: false,
+  },
 ];
 
 const SessionForm: React.FC = () => {
-  // Estado inicial con una sesión vacía
-  const initialSession: SessionData = {
-    id: Date.now().toString(),
-    event_id: '',
-    time_slot_id: '',
-    title: '',
-    capacity: '',
-    description: '',
+  // Estado inicial
+  const [sessions, setSessions] = useState<SessionData[]>(mockExistingSessions);
+  const [events, setEvents] = useState<EventWithSlots[]>([])
+  const [errors, setErrors] = useState<Record<string, SessionFormErrors>>({});
+  const [reloadSession, setReloadSession] = useState(0)
+  const [speaker, setSpeaker] = useState<responseSpeaker[]>();
+
+  // Crear nueva sesión vacía
+ const createNewEmptySession = (): SessionData => ({
+  id: Date.now().toString(),
+  event_id: '',
+  time_slot_id: '',
+  title: '',
+  capacity: '',
+  description: '',
+  speaker_id: "", 
+  isDirty: false,
+});
+
+  
+const getTimeSlotsForSession = (session: SessionData) => {
+  if (!session.event_id) return [];
+
+  const event = events.find(e => e.id === session.event_id);
+  return event?.time_slot ?? [];
+};
+
+
+ 
+  useEffect(() => {
+      const loadEventSlot = async () => {
+        try {
+          const response = await getEventSlot();
+    
+          setEvents(response.events)
+         
+      
+        } catch (err) {
+          console.error(err);
+        }
+      };
+    
+      loadEventSlot();
+    }, []);// meter el estado q cambia lso eventos o el horario
+  // si cambia solo los speaker
+  useEffect(() => {
+      const loadEspeakerSlot = async () => {
+        try {
+          const response = await getSpeakersAll()
+    
+          setSpeaker(response.speaker)
+         
+      
+        } catch (err) {
+          console.error(err);
+        }
+      };
+    
+      loadEspeakerSlot();
+    }, []);// meter el estado q cambia lso eventos o el horario
+
+  useEffect(() => {
+       const loadSession = async () => {
+         try {
+           const response = await getSessions();
+     
+           const mappedSession: SessionData[] = response.session.map((session) => ({
+             id: session.id,
+             event_id: session.event_id,
+             time_slot_id: session.time_slot_id,
+             backendId: session.id,
+             title: session.title,
+             capacity: String(session.capacity),
+             speaker_id : session.speaker_id,
+             description: session.description,
+             isDirty: false,
+           }));
+           setSessions(mappedSession)
+          // setReloadSession();
+         } catch (err) {
+           console.error(err);
+         }
+       };
+     
+       loadSession();
+     }, [reloadSession]);
+  
+  
+  // Agregar nueva sesión
+  const addNewSession = () => {
+    const newSession = createNewEmptySession();
+    setSessions(prev => [...prev, newSession]);
   };
 
-  const [sessions, setSessions] = useState<SessionData[]>([initialSession]);
-  const [errors, setErrors] = useState<SessionFormErrors>({});
-
-  // En producción, aquí harías fetch de datos
-  useEffect(() => {
-    // Ejemplo: fetchEvents().then(setEvents);
-    // Ejemplo: fetchTimeSlots().then(setTimeSlots);
-  }, []);
+  // Eliminar sesión de la vista
+  const removeSession = (sessionId: string) => {
+    if (sessions.length > 1) {
+      setSessions(prev => prev.filter(session => session.id !== sessionId));
+      
+      if (errors[sessionId]) {
+        const newErrors = { ...errors };
+        delete newErrors[sessionId];
+        setErrors(newErrors);
+      }
+    }
+  };
 
   // Manejar cambios en una sesión específica
   const handleSessionChange = (sessionId: string, field: keyof SessionData, value: string) => {
     setSessions(prev => prev.map(session => 
       session.id === sessionId 
-        ? { ...session, [field]: value }
+        ? { ...session, [field]: value, isDirty: true }
         : session
     ));
 
-    // Limpiar errores del campo modificado
-    if (errors.sessions?.[sessionId]?.[field]) {
-      setErrors(prev => ({
-        ...prev,
-        sessions: {
-          ...prev.sessions,
+    // Solo limpiar errores para campos que tienen validación
+    if (field === 'event_id' || field === 'time_slot_id' || 
+        field === 'title' || field === 'capacity' || field === 'description') {
+      if (errors[sessionId]?.[field as keyof SessionFormErrors]) {
+        setErrors(prev => ({
+          ...prev,
           [sessionId]: {
-            ...prev.sessions?.[sessionId],
+            ...prev[sessionId],
             [field]: undefined
           }
-        }
-      }));
+        }));
+      }
     }
   };
 
-  // Agregar nueva sesión
-  const addNewSession = () => {
-    const newSession: SessionData = {
-      id: Date.now().toString(),
-      event_id: '',
-      time_slot_id: '',
-      title: '',
-      capacity: '',
-      description: '',
-    };
+  // Validar una sesión específica
+  const validateSession = (session: SessionData): SessionFormErrors => {
+    const sessionErrors: SessionFormErrors = {};
+
+    // Validar evento
+    if (!session.event_id) {
+      sessionErrors.event_id = 'Seleccione un evento';
+    }
+
+    // Validar time slot
+    if (!session.time_slot_id) {
+      sessionErrors.time_slot_id = 'Seleccione un horario';
+    }
+
+    // Validar título
+    if (!session.title.trim()) {
+      sessionErrors.title = 'El título es requerido';
+    } else if (session.title.trim().length < 3) {
+      sessionErrors.title = 'El título debe tener al menos 3 caracteres';
+    } else if (session.title.trim().length > 100) {
+      sessionErrors.title = 'El título no puede exceder 100 caracteres';
+    }
+
+    // Validar capacidad
+    if (!session.capacity) {
+      sessionErrors.capacity = 'La capacidad es requerida';
+    } else if (parseInt(session.capacity) <= 0) {
+      sessionErrors.capacity = 'La capacidad debe ser mayor a 0';
+    } else if (parseInt(session.capacity) > 1000) {
+      sessionErrors.capacity = 'La capacidad no puede exceder 1000 personas';
+    }
+
+    // Validar descripción (opcional pero con límite)
+    if (session.description.length > 500) {
+      sessionErrors.description = 'La descripción no puede exceder 500 caracteres';
+    }
+
+    return sessionErrors;
+  };
+
+  // Crear sesión (POST al backend)
+  const createSession = async (sessionId: string) => {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) return;
+
+    const sessionErrors = validateSession(session);
     
-    setSessions(prev => [...prev, newSession]);
-  };
-
-  // Eliminar una sesión
-  const removeSession = (sessionId: string) => {
-    if (sessions.length > 1) {
-      setSessions(prev => prev.filter(session => session.id !== sessionId));
-      
-      // Limpiar errores de la sesión eliminada
-      if (errors.sessions?.[sessionId]) {
-        setErrors(prev => {
-          const newSessions = { ...prev.sessions };
-          delete newSessions[sessionId];
-          return { ...prev, sessions: newSessions };
-        });
-      }
+    if (Object.keys(sessionErrors).length > 0) {
+      setErrors(prev => ({ ...prev, [sessionId]: sessionErrors }));
+      alert('Corrija los errores antes de crear');
+      return;
     }
+
+    // llamada al backend
+    const payload = {
+      event_id: session.event_id,
+      time_slot_id: session.time_slot_id,
+      title: session.title.trim(),
+      capacity: parseInt(session.capacity),
+      description: session.description.trim(),
+      speaker_id: session.speaker_id,
+      };
+   
+    try{
+        const response = await sendSession(payload);
+        const backendId = `backend-session-${Date.now()}`;
+        console.log("Backen response", response)
+
+        setSessions(prev => prev.map(s => 
+        s.id === sessionId 
+          ? { ...s, backendId, isDirty: false }
+          : s
+      ));
+        console.log(`Sesión "${session.title}" creada exitosamente`);
+
+    }catch (error){
+    console.error(error)
+   }  
+    
   };
 
-  // Validar formulario
-  const validateForm = (): boolean => {
-    const sessionErrors: Record<string, any> = {};
-    let hasErrors = false;
+  // Actualizar sesión (PUT al backend)
+  const updateSession = async (sessionId: string) => {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session || !session.backendId) {
+      alert('Esta sesión no existe en el backend. Use "Crear" primero.');
+      return;
+    }
 
-    sessions.forEach((session, index) => {
-      const sessionError: any = {};
+    const sessionErrors = validateSession(session);
+    
+    if (Object.keys(sessionErrors).length > 0) {
+      setErrors(prev => ({ ...prev, [sessionId]: sessionErrors }));
+      alert('Corrija los errores antes de actualizar');
+      return;
+    }
+    try{
 
-      // Validar evento
-      if (!session.event_id) {
-        sessionError.event_id = 'Seleccione un evento';
-        hasErrors = true;
-      }
-
-      // Validar time slot
-      if (!session.time_slot_id) {
-        sessionError.time_slot_id = 'Seleccione un horario';
-        hasErrors = true;
-      }
-
-      // Validar título
-      if (!session.title.trim()) {
-        sessionError.title = 'El título es requerido';
-        hasErrors = true;
-      } else if (session.title.trim().length < 3) {
-        sessionError.title = 'El título debe tener al menos 3 caracteres';
-        hasErrors = true;
-      }
-
-      // Validar capacidad
-      if (!session.capacity) {
-        sessionError.capacity = 'La capacidad es requerida';
-        hasErrors = true;
-      } else if (parseInt(session.capacity) <= 0) {
-        sessionError.capacity = 'La capacidad debe ser mayor a 0';
-        hasErrors = true;
-      }
-
-      if (Object.keys(sessionError).length > 0) {
-        sessionErrors[session.id] = sessionError;
-      }
-    });
-
-    setErrors({ sessions: sessionErrors });
-    return !hasErrors;
-  };
-
-  // Manejar envío del formulario
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (validateForm()) {
-      // Preparar datos para enviar al backend
-      const dataToSend = sessions.map(session => ({
+      // llamada al backend
+      const payload = {
+        id: session.backendId,
         event_id: session.event_id,
         time_slot_id: session.time_slot_id,
         title: session.title.trim(),
         capacity: parseInt(session.capacity),
         description: session.description.trim() || null,
-      }));
-
-      console.log('Datos de sesiones a enviar:', dataToSend);
+        speaker_id : session.speaker_id
+      }
       
-      // Aquí iría tu llamada a la API
-      // fetch('/api/sessions/bulk', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ sessions: dataToSend })
-      // })
       
-      alert(`${sessions.length} sesión(es) lista(s) para enviar. Aquí llamarías a tu API.`);
-    }
+      setSessions(prev => prev.map(s => 
+        s.id === sessionId 
+          ? { ...s, isDirty: false }
+          : s
+      ));
+      const response = await updateSession(payload)
+      console.log(`Sesión "${response.title}" actualizada exitosamente`);
+  }catch (error){
+    console.error(error)
+   }  
   };
 
-  // Resetear formulario
-  const resetForm = () => {
-    setSessions([initialSession]);
-    setErrors({});
+  // Eliminar sesión del backend (DELETE)
+  const deleteSession = async (sessionId: string) => {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) return;
+    try{
+    
+        // Simulación de llamada al backend
+          const response = deleteSessionService(sessionId)
+          if (!(await response).success){
+            console.log("No se pudo eliminar el speaker")
+            return
+          }
+            console.log(`Session "${session.id}" eliminado del backend`);
+            //setReloadSpeakers(prev => prev + 1);
+    
+        }catch(error){
+          console.log(error);
+    
+        }
+      setReloadSession(prev => prev + 1);
+
+
+    if (!session.backendId) {
+      removeSession(sessionId);
+      alert('Borrador de sesión eliminado');
+      return;
+    }
+
+    removeSession(sessionId);
+    alert(`Sesión "${session.title}" eliminada del backend`);
+  };
+
+  // Limpiar sesión
+  const clearSession = (sessionId: string) => {
+    setSessions(prev => prev.map(session => 
+      session.id === sessionId 
+        ? createNewEmptySession()
+        : session
+    ));
+
+    if (errors[sessionId]) {
+      const newErrors = { ...errors };
+      delete newErrors[sessionId];
+      setErrors(newErrors);
+    }
   };
 
   return (
     <div className="max-w-7xl mx-auto p-4">
       <div className="bg-gray-50 rounded-lg shadow-xl p-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-blue-800">Crear Sesiones del Evento</h2>
+          <div>
+            <h2 className="text-xl font-bold text-blue-800">Gestión de Sesiones</h2>
+          </div>
           <button
             type="button"
             onClick={addNewSession}
@@ -204,33 +379,53 @@ const SessionForm: React.FC = () => {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Añadir Sesión
+            Nueva Sesión
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Lista de sesiones */}
+        <div className="space-y-8">
           {sessions.map((session, index) => (
-            <div key={session.id} className="p-6 border-2 border-indigo-100 rounded-lg bg-white shadow-sm">
+            <div 
+              key={session.id} 
+              className={`p-6 border-2 rounded-lg bg-white shadow-sm ${
+                session.isDirty ? 'border-yellow-300' : 'border-indigo-100'
+              }`}
+            >
+              {/* Header de la sesión */}
               <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Sesión #{index + 1}
-                </h3>
+                <div className="flex items-center gap-3">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Sesión #{index + 1}
+                  </h3>
+                  {session.backendId && (
+                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                      Guardada
+                    </span>
+                  )}
+                  {session.isDirty && (
+                    <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
+                      Cambios sin guardar
+                    </span>
+                  )}
+                </div>
+                
                 {sessions.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeSession(session.id)}
                     className="text-red-500 hover:text-red-700 p-1"
-                    title="Eliminar sesión"
+                    title="Quitar sesión de la vista"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 )}
               </div>
 
               {/* Campos en grid horizontal */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
                 {/* Event ID */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -239,17 +434,17 @@ const SessionForm: React.FC = () => {
                   <select
                     value={session.event_id}
                     onChange={(e) => handleSessionChange(session.id, 'event_id', e.target.value)}
-                    className={`w-full p-2 border bg-indigo-50 rounded ${errors.sessions?.[session.id]?.event_id ? 'border-red-500' : 'border-gray-300'}`}
+                    className={`w-full p-3 border bg-indigo-50 rounded ${errors[session.id]?.event_id ? 'border-red-500' : 'border-gray-300'}`}
                   >
                     <option value="">-- Seleccionar --</option>
-                    {mockEvents.map(event => (
+                    {events.map(event => (
                       <option key={event.id} value={event.id}>
                         {event.title}
                       </option>
                     ))}
                   </select>
-                  {errors.sessions?.[session.id]?.event_id && (
-                    <p className="text-red-500 text-xs mt-1">{errors.sessions[session.id]?.event_id}</p>
+                  {errors[session.id]?.event_id && (
+                    <p className="text-red-500 text-xs mt-1">{errors[session.id]?.event_id}</p>
                   )}
                 </div>
 
@@ -261,17 +456,18 @@ const SessionForm: React.FC = () => {
                   <select
                     value={session.time_slot_id}
                     onChange={(e) => handleSessionChange(session.id, 'time_slot_id', e.target.value)}
-                    className={`w-full p-2 border bg-indigo-50 rounded ${errors.sessions?.[session.id]?.time_slot_id ? 'border-red-500' : 'border-gray-300'}`}
+                    className={`w-full p-3 border bg-indigo-50 rounded ${errors[session.id]?.time_slot_id ? 'border-red-500' : 'border-gray-300'}`}
                   >
                     <option value="">-- Seleccionar --</option>
-                    {mockTimeSlots.map(slot => (
-                      <option key={slot.id} value={slot.id}>
-                        {slot.time_range}
-                      </option>
-                    ))}
+                     {getTimeSlotsForSession(session).map(slot => (
+                        <option key={slot.id} value={slot.id}>
+                          {slot.start_time} - {slot.end_time}
+                        </option>
+                      ))}
+
                   </select>
-                  {errors.sessions?.[session.id]?.time_slot_id && (
-                    <p className="text-red-500 text-xs mt-1">{errors.sessions[session.id]?.time_slot_id}</p>
+                  {errors[session.id]?.time_slot_id && (
+                    <p className="text-red-500 text-xs mt-1">{errors[session.id]?.time_slot_id}</p>
                   )}
                 </div>
 
@@ -285,10 +481,10 @@ const SessionForm: React.FC = () => {
                     value={session.title}
                     onChange={(e) => handleSessionChange(session.id, 'title', e.target.value)}
                     placeholder="Título de la sesión"
-                    className={`w-full p-2 border bg-indigo-50 rounded ${errors.sessions?.[session.id]?.title ? 'border-red-500' : 'border-gray-300'}`}
+                    className={`w-full p-3 border bg-indigo-50 rounded ${errors[session.id]?.title ? 'border-red-500' : 'border-gray-300'}`}
                   />
-                  {errors.sessions?.[session.id]?.title && (
-                    <p className="text-red-500 text-xs mt-1">{errors.sessions[session.id]?.title}</p>
+                  {errors[session.id]?.title && (
+                    <p className="text-red-500 text-xs mt-1">{errors[session.id]?.title}</p>
                   )}
                 </div>
 
@@ -303,10 +499,11 @@ const SessionForm: React.FC = () => {
                     onChange={(e) => handleSessionChange(session.id, 'capacity', e.target.value)}
                     placeholder="0"
                     min="1"
-                    className={`w-full p-2 border bg-indigo-50 rounded ${errors.sessions?.[session.id]?.capacity ? 'border-red-500' : 'border-gray-300'}`}
+                    max="1000"
+                    className={`w-full p-3 border bg-indigo-50 rounded ${errors[session.id]?.capacity ? 'border-red-500' : 'border-gray-300'}`}
                   />
-                  {errors.sessions?.[session.id]?.capacity && (
-                    <p className="text-red-500 text-xs mt-1">{errors.sessions[session.id]?.capacity}</p>
+                  {errors[session.id]?.capacity && (
+                    <p className="text-red-500 text-xs mt-1">{errors[session.id]?.capacity}</p>
                   )}
                 </div>
 
@@ -320,47 +517,136 @@ const SessionForm: React.FC = () => {
                     value={session.description}
                     onChange={(e) => handleSessionChange(session.id, 'description', e.target.value)}
                     placeholder="Descripción opcional"
-                    className="w-full p-2 border bg-indigo-50 rounded border-gray-300"
+                    className="w-full p-3 border bg-indigo-50 rounded border-gray-300"
                   />
+                </div>
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Speaker *
+                </label>
+
+                <select
+                value={session.speaker_id ?? ''}
+                onChange={(e) =>
+                  setSessions(prev =>
+                    prev.map(s =>
+                      s.id === session.id
+                        ? {
+                            ...s,
+                            speaker_id: e.target.value,
+                            isDirty: true
+                          }
+                        : s
+                    )
+                  )
+                }
+                className={`w-full p-3 border bg-indigo-50 rounded ${errors[session.id]?.event_id ? 'border-red-500' : 'border-gray-300'}`}
+              >
+                <option value="">Seleccione speaker</option>
+                {speaker?.map(speaker => (
+                  <option key={speaker.id} value={speaker.id}>
+                    {speaker.full_name}
+                  </option>
+                ))}
+              </select>
+              </div>
+              </div>
+
+              {/* Contadores de caracteres */}
+              <div className="flex justify-between text-xs text-gray-500 mb-6">
+                <div>
+                  Título: {session.title.length}/100 caracteres
+                </div>
+                <div>
+                  Descripción: {session.description.length}/500 caracteres
                 </div>
               </div>
 
-              {/* Contador de caracteres para título */}
-              <div className="mt-2 text-xs text-gray-500">
-                Título: {session.title.length}/100 caracteres
+              {/* Botones CRUD */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => createSession(session.id)}
+                  disabled={!!session.backendId}
+                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${
+                    session.backendId 
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                      : 'bg-green-500 text-white hover:bg-green-600'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Crear
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => updateSession(session.id)}
+                  disabled={!session.backendId || !session.isDirty}
+                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${
+                    !session.backendId || !session.isDirty
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Actualizar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => deleteSession(session.id)}
+                  className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Eliminar
+                </button>
+
+                {/* <button
+                  type="button"
+                  onClick={() => clearSession(session.id)}
+                  disabled={!session.event_id && !session.time_slot_id && !session.title && !session.capacity && !session.description}
+                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${
+                    !session.event_id && !session.time_slot_id && !session.title && !session.capacity && !session.description
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                      : 'bg-gray-500 text-white hover:bg-gray-600'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Limpiar
+                </button> */}
               </div>
             </div>
           ))}
+        </div>
 
-          {/* Botones principales */}
-          <div className="flex gap-3 pt-4">
-            <CreateSubmit name="Crear Sesiones" />
-            <ResetFormat name="Limpiar Todo" onClick={resetForm} />
+        {/* Estadísticas */}
+        <div className="mt-8 p-4 bg-blue-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-blue-700">{sessions.length}</p>
+              <p className="text-sm text-blue-600">Sesiones en vista</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-green-700">
+                {sessions.filter(s => s.backendId).length}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-yellow-700">
+                {sessions.filter(s => s.isDirty).length}
+              </p>
+              <p className="text-sm text-yellow-600">Con cambios sin guardar</p>
+            </div>
           </div>
-        </form>
-
-        {/* Vista previa de datos */}
-        {/* <div className="mt-8 p-4 bg-gray-50 rounded">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-medium text-gray-700">Datos a enviar al backend:</h3>
-            <span className="text-sm text-gray-500">
-              {sessions.length} sesión(es) configurada(s)
-            </span>
-          </div>
-          <pre className="text-sm text-gray-600 overflow-x-auto max-h-60 overflow-y-auto">
-            {JSON.stringify(
-              sessions.map(session => ({
-                event_id: session.event_id,
-                time_slot_id: session.time_slot_id,
-                title: session.title,
-                capacity: session.capacity ? parseInt(session.capacity) : 0,
-                description: session.description || null,
-              })),
-              null,
-              2
-            )}
-          </pre>
-        </div> */}
+        </div>
       </div>
     </div>
   );
