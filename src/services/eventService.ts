@@ -1,14 +1,15 @@
-import type { SendEventData, UpdateEventData, OnlyEventsResponse, DeleteEventsResponse  } from "../types";
+import type { SendEventData, UpdateEventData, OnlyEventsResponse, DeleteEventsResponse, EventSlotListResponse } from "../types";
 
 
 
 const url = "http://127.0.0.1:8000/api/v1/event/"
 const urlAll = "http://127.0.0.1:8000/api/v1/event/all/?page=1&limit=10"
+const urlSlot = "http://127.0.0.1:8000/api/v1/event/slot/"
 
 
 export function sendEvents(event: SendEventData) {
   console.log(JSON.stringify(event, null, 2));
-  
+
   fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -44,9 +45,22 @@ export function getEventsAll(): Promise<OnlyEventsResponse> {
     });
 }
 
-export function deleteEvents(event_id:string): Promise<DeleteEventsResponse> {
+export function deleteEvents(event_id: string): Promise<DeleteEventsResponse> {
   return fetch(`http://127.0.0.1:8000/api/v1/event/${event_id}`, {
     method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+  })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}`);
+      }
+      return res.json();
+    });
+}
+
+export function getEventsNameSlot(): Promise<EventSlotListResponse> {
+  return fetch(urlSlot, {
+    method: "GET",
     headers: { "Content-Type": "application/json" },
   })
     .then(res => {

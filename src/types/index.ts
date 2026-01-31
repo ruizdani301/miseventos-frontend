@@ -29,13 +29,13 @@ export type ResetProps = {
   name: React.ReactNode;
 };
 
-export   type FormErrors = {
-    title?: string;
-    description?: string;
-    start_date?: string;
-    end_date?: string;
-    capacity?: string;
-  };
+export type FormErrors = {
+  title?: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  capacity?: string;
+};
 
 export type EventObject = {
   id: string;
@@ -45,13 +45,25 @@ export type EventObject = {
   end_date: string;
   capacity: string;
   status: EventStatus;
-  created_at : string
+  created_at: string
 };
 
 export type OnlyEventsResponse = {
   success: boolean;
   error_message: string | null;
-  events: EventObject[] ;
+  events: EventObject[];
+
+};
+export type EventName = {
+  event_id: string;
+  title: string;
+
+};
+
+export type ListEventsNameResponse = {
+  success: boolean;
+  error_message: string | null;
+  events: EventName[];
 
 };
 
@@ -83,56 +95,56 @@ export type EventData = {
   isDirty?: boolean;
 };
 
-// typos de schedule
 export type TimeRange = {
+  id?: string
   start_time: string
   end_time: string
 }
 
 export type slotRequest = {
   event_id: string
-  time_slots:TimeRange[]
-  is_assigned: boolean 
+  time_slots: TimeRange[]
+  is_assigned: boolean
 }
 
 
 export type ScheduleResponse = {
-  id:string
+  id?: string
   event_id: string
-  time_slots:TimeRange[]
-  is_assigned: boolean 
+  time_slots: TimeRange[]
+  is_assigned: boolean
 }
 
 // Speaker type
 export type SpeakerCreate = {
-  full_name : string
-  email : string
+  full_name: string
+  email: string
   bio: string
 }
 
 export type IdSpeaker = {
-  id : string
+  id: string
   created_at: string
 }
 
 export type responseSpeaker = {
-  id:string
-  full_name : string
-  email : string
+  id: string
+  full_name: string
+  email: string
   bio: string
-  created_at : string
+  created_at: string
 }
 
 export type speakerResponse = {
   success: boolean
   error_message: string | null
-  speaker:IdSpeaker | responseSpeaker[]
+  speaker: IdSpeaker | responseSpeaker[]
 }
 
 export type speakerListResponse = {
   success: boolean
   error_message: string | null
-  speaker:responseSpeaker[]
+  speaker: responseSpeaker[]
 }
 
 export type DeleteSpeakerResponse = {
@@ -143,9 +155,9 @@ export type DeleteSpeakerResponse = {
 };
 
 export type updateRequest = {
-  id:string
-  full_name : string
-  email : string
+  id: string
+  full_name: string
+  email: string
   bio: string
 }
 
@@ -159,7 +171,7 @@ export type SlotTimeRange = {
 export type EventWithSlots = {
   id: string
   title: string
-  time_slot: SlotTimeRange[]
+  time_slot?: SlotTimeRange[]
 }
 
 export type EventSlotListResponse = {
@@ -184,15 +196,15 @@ export type SessionCompleteResponse = {
   session: SessionResponse[]
 }
 
-export type SessionCreate = 
+export type SessionCreate =
   {
-  title: string
-  description: string
-  event_id: string
-  capacity: number,
-  time_slot_id: string
-  speaker_id:string
-}
+    title: string
+    description: string
+    event_id: string
+    capacity: number,
+    time_slot_id: string
+    speaker_id: string
+  }
 
 export type SessionSimpleResponse = {
   success: boolean,
@@ -207,13 +219,26 @@ export type DeleteSessionResponse = {
   session: null
 };
 
-export type SessionUpdate = 
+export type SessionUpdate =
   {
-  id: string
-  title: string
-  description: string
-  event_id: string
-  capacity: number,
-  time_slot_id: string
-  speaker_id:string
+    id: string
+    title: string
+    description: string
+    event_id: string
+    capacity: number,
+    time_slot_id: string
+    speaker_id: string
+  }
+
+export type slotReference = {
+  event_id: string;
+  is_assigned: boolean;
+  created_at: string;
+  slots: SlotTimeRange[];
+}
+
+export type SlotResponse = {
+  success: boolean,
+  error_message: null,
+  slot: slotReference
 }

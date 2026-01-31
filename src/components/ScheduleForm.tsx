@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import {sendSchedule} from "../services/scheduleService"
-
+import React, { useState, useEffect } from 'react';
+import { sendSchedule, updateSchedule, deleteSchedule as apiDeleteSchedule } from "../services/scheduleService"
+import { getEventsNameSlot } from "../services/eventService"
+import type { EventWithSlots, SlotTimeRange } from "../types"
 
 // Definir tipos
 type TimeRange = {
@@ -18,47 +19,83 @@ type ScheduleData = {
   isDirty?: boolean;
 };
 
+type EventsNotSLot = {
+  event_id: string;
+  title: string
+}
+
+type EventData = {
+  id: string;
+  title: string;
+  time_slot: TimeRange[]
+  isDirty?: boolean;
+}
+
+
+
+
 type ScheduleFormErrors = {
   event_id?: string;
   time_ranges?: string;
 };
-
-// Mock de datos
-const mockEvents = [
-  { id: '1', title: 'Conferencia Anual de Liderazgo' },
-  { id: '2', title: 'Workshop de Innovación' },
-  { id: '3', title: 'Reunión de Accionistas' },
-];
-
-const mockExistingSchedules: ScheduleData[] = [
-  {
-    id: 'schedule-1',
-    backendId: 'backend-schedule-1',
-    event_id: '1',
-    time_ranges: [
-      { id: 'range-1', start_time: '09:00', end_time: '10:30' },
-      { id: 'range-2', start_time: '11:00', end_time: '12:30' },
-    ],
-    is_assigned: true,
-    isDirty: false,
-  },
-  {
-    id: 'schedule-2',
-    backendId: 'backend-schedule-2',
-    event_id: '2',
-    time_ranges: [
-      { id: 'range-3', start_time: '14:00', end_time: '15:30' },
-    ],
-    is_assigned: false,
-    isDirty: false,
-  },
-];
+// El mock ha sido eliminado para usar datos reales del backend.
 
 const ScheduleForm: React.FC = () => {
   // Estado inicial
-  const [schedules, setSchedules] = useState<ScheduleData[]>(mockExistingSchedules);
+  const [schedules, setSchedules] = useState<ScheduleData[]>([]);
   const [errors, setErrors] = useState<Record<string, ScheduleFormErrors>>({});
+  const [events, setEvents] = useState<EventData[]>([]);
 
+  useEffect(() => {
+    const loadEventsName = async () => {
+      try {
+        const response = await getEventsNameSlot();
+
+        // Helper de formateo local
+        const formatTime = (timeStr: string) => {
+          if (!timeStr) return "09:00";
+          const parts = timeStr.split(':');
+          if (parts.length < 2) return "09:00";
+          return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+        };
+
+        const mappedEvents: EventData[] = response.events.map((event: EventWithSlots) => ({
+          id: event.id,
+          title: event.title,
+          time_slot: (event.time_slot || []).map((slot: SlotTimeRange) => ({
+            id: slot.id,
+            start_time: formatTime(slot.start_time),
+            end_time: formatTime(slot.end_time),
+          })),
+          isDirty: false,
+        }));
+        console.log(mappedEvents)
+        setEvents(mappedEvents);
+
+        // Poblar la lista de horarios con eventos que ya tienen rangos
+        const initialSchedules: ScheduleData[] = mappedEvents
+          .filter(event => event.time_slot.length > 0)
+          .map(event => ({
+            id: `schedule-${event.id}`,
+            backendId: event.id,
+            event_id: event.id,
+            time_ranges: event.time_slot,
+            is_assigned: true,
+            isDirty: false
+          }));
+
+        if (initialSchedules.length > 0) {
+          setSchedules(initialSchedules);
+        } else {
+          setSchedules([createNewEmptySchedule()]);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadEventsName();
+  }, []);
   // Generar opciones de hora (cada 30 minutos)
   const generateTimeOptions = () => {
     const times = [];
@@ -100,7 +137,7 @@ const ScheduleForm: React.FC = () => {
   const removeSchedule = (scheduleId: string) => {
     if (schedules.length > 1) {
       setSchedules(prev => prev.filter(schedule => schedule.id !== scheduleId));
-      
+
       if (errors[scheduleId]) {
         const newErrors = { ...errors };
         delete newErrors[scheduleId];
@@ -111,9 +148,37 @@ const ScheduleForm: React.FC = () => {
 
   // Manejar cambio de evento
   const handleEventChange = (scheduleId: string, value: string) => {
-    setSchedules(prev => prev.map(schedule => 
-      schedule.id === scheduleId 
-        ? { ...schedule, event_id: value, isDirty: true }
+    // Buscar el evento seleccionado para extraer sus slots
+    const selectedEvent = events.find(e => e.id === value);
+
+    // Formatear las horas del backend (HH:mm:ss.ms) a HH:mm
+    const formatTime = (timeStr: string) => {
+      if (!timeStr) return "09:00";
+      const [hours, minutes] = timeStr.split(':');
+      return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+    };
+
+    // Identificar si el evento ya tiene horarios
+    const hasSchedules = (selectedEvent?.time_slot || []).length > 0;
+
+    // Crear los nuevos rangos basados en los slots del evento
+    const newTimeRanges: TimeRange[] = hasSchedules
+      ? (selectedEvent?.time_slot || []).map(slot => ({
+        id: slot.id,
+        start_time: formatTime(slot.start_time),
+        end_time: formatTime(slot.end_time),
+      }))
+      : []; // Vacío si no tiene (para que el cliente sepa que no hay horarios)
+
+    setSchedules(prev => prev.map(schedule =>
+      schedule.id === scheduleId
+        ? {
+          ...schedule,
+          event_id: value,
+          time_ranges: newTimeRanges,
+          backendId: hasSchedules ? value : undefined, // Marcamos como existente si tiene slots
+          isDirty: false // Se resetea al cargar un nuevo evento
+        }
         : schedule
     ));
 
@@ -127,70 +192,69 @@ const ScheduleForm: React.FC = () => {
 
   // Manejar cambio de checkbox
   const handleCheckboxChange = (scheduleId: string, checked: boolean) => {
-    setSchedules(prev => prev.map(schedule => 
-      schedule.id === scheduleId 
+    setSchedules(prev => prev.map(schedule =>
+      schedule.id === scheduleId
         ? { ...schedule, is_assigned: checked, isDirty: true }
         : schedule
     ));
   };
 
-  // Agregar nuevo rango de horas a un horario específico
+
   const addTimeRange = (scheduleId: string) => {
     const newTimeRange: TimeRange = {
       id: Date.now().toString(),
       start_time: '09:00',
       end_time: '17:00',
     };
-    
-    setSchedules(prev => prev.map(schedule => 
-      schedule.id === scheduleId 
-        ? { 
-            ...schedule, 
-            time_ranges: [...schedule.time_ranges, newTimeRange],
-            isDirty: true
-          }
+
+    setSchedules(prev => prev.map(schedule =>
+      schedule.id === scheduleId
+        ? {
+          ...schedule,
+          time_ranges: [...schedule.time_ranges, newTimeRange],
+          isDirty: true
+        }
         : schedule
     ));
   };
 
-  // Eliminar un rango de horas
+
   const removeTimeRange = (scheduleId: string, rangeId: string) => {
-    setSchedules(prev => prev.map(schedule => 
-      schedule.id === scheduleId 
-        ? { 
-            ...schedule, 
-            time_ranges: schedule.time_ranges.length > 1 
-              ? schedule.time_ranges.filter(range => range.id !== rangeId)
-              : schedule.time_ranges,
-            isDirty: true
-          }
+    setSchedules(prev => prev.map(schedule =>
+      schedule.id === scheduleId
+        ? {
+          ...schedule,
+          time_ranges: schedule.time_ranges.length > 1
+            ? schedule.time_ranges.filter(range => range.id !== rangeId)
+            : schedule.time_ranges,
+          isDirty: true
+        }
         : schedule
     ));
   };
 
-  // Manejar cambio en un rango de horas
+
   const handleTimeRangeChange = (
-    scheduleId: string, 
-    rangeId: string, 
-    field: 'start_time' | 'end_time', 
+    scheduleId: string,
+    rangeId: string,
+    field: 'start_time' | 'end_time',
     value: string
   ) => {
-    setSchedules(prev => prev.map(schedule => 
-      schedule.id === scheduleId 
+    setSchedules(prev => prev.map(schedule =>
+      schedule.id === scheduleId
         ? {
-            ...schedule,
-            time_ranges: schedule.time_ranges.map(range =>
-              range.id === rangeId 
-                ? { ...range, [field]: value }
-                : range
-            ),
-            isDirty: true
-          }
+          ...schedule,
+          time_ranges: schedule.time_ranges.map(range =>
+            range.id === rangeId
+              ? { ...range, [field]: value }
+              : range
+          ),
+          isDirty: true
+        }
         : schedule
     ));
   };
 
-  // Calcular duración de un rango
   const calculateDuration = (startTime: string, endTime: string): string => {
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [endHour, endMinute] = endTime.split(':').map(Number);
@@ -209,7 +273,6 @@ const ScheduleForm: React.FC = () => {
       scheduleErrors.event_id = 'Seleccione un evento';
     }
 
-    // Validar rangos de horas
     const hasInvalidTimeRange = schedule.time_ranges.some(range => {
       const [startHour, startMinute] = range.start_time.split(':').map(Number);
       const [endHour, endMinute] = range.end_time.split(':').map(Number);
@@ -226,53 +289,61 @@ const ScheduleForm: React.FC = () => {
   };
 
   // Crear horario (POST al backend)
-const createSchedule = async (scheduleId: string) => {
-  const schedule = schedules.find(s => s.id === scheduleId);
-  if (!schedule) return;
+  const handleCreateSchedule = async (scheduleId: string) => {
+    const schedule = schedules.find(s => s.id === scheduleId);
+    if (!schedule) return;
 
-  const scheduleErrors = validateSchedule(schedule);
+    const scheduleErrors = validateSchedule(schedule);
 
-  if (Object.keys(scheduleErrors).length > 0) {
-    setErrors(prev => ({ ...prev, [scheduleId]: scheduleErrors }));
-    alert('Corrija los errores antes de crear');
-    return;
-  }
+    if (Object.keys(scheduleErrors).length > 0) {
+      setErrors(prev => ({ ...prev, [scheduleId]: scheduleErrors }));
+      alert('Corrija los errores antes de crear');
+      return;
+    }
 
-  const payload = {
-    event_id: schedule.event_id,
-    time_slots: schedule.time_ranges.map(range => ({
-      start_time: range.start_time,
-      end_time: range.end_time,
-    })),
-    is_assigned: schedule.is_assigned,
+    // Asegurar formato HH:mm:00 para el backend
+    const ensureSeconds = (timeStr: string) => {
+      if (timeStr.split(':').length === 2) return `${timeStr}:00`;
+      return timeStr;
+    };
+
+    const payload = {
+      event_id: schedule.event_id,
+      time_slots: schedule.time_ranges.map(range => ({
+        id: range.id,
+        start_time: ensureSeconds(range.start_time),
+        end_time: ensureSeconds(range.end_time),
+      })),
+      is_assigned: schedule.is_assigned,
+    };
+    console.log("Payload to send (Create):", JSON.stringify(payload, null, 2));
+
+    try {
+      //llamada al backend
+      const response = await sendSchedule(payload);
+
+      console.log("Backend response:", response);
+
+      const backendId = response.id ?? `backend-schedule-${Date.now()}`;
+
+      setSchedules(prev =>
+        prev.map(s =>
+          s.id === scheduleId
+            ? { ...s, backendId, isDirty: false }
+            : s
+        )
+      );
+
+      alert('Horario creado exitosamente en el backend');
+    } catch (error) {
+      console.error(error);
+      alert('Error al crear el horario');
+    }
   };
-
-  try {
-    //llamada al backend
-    const response = await sendSchedule(payload);
-
-    console.log("Backend response:", response);
-
-    const backendId = response.id ?? `backend-schedule-${Date.now()}`;
-
-    setSchedules(prev =>
-      prev.map(s =>
-        s.id === scheduleId
-          ? { ...s, backendId, isDirty: false }
-          : s
-      )
-    );
-
-    alert('Horario creado exitosamente en el backend');
-  } catch (error) {
-    console.error(error);
-    alert('Error al crear el horario');
-  }
-};
 
 
   // Actualizar horario (PUT al backend)
-  const updateSchedule = (scheduleId: string) => {
+  const handleUpdateSchedule = async (scheduleId: string) => {
     const schedule = schedules.find(s => s.id === scheduleId);
     if (!schedule || !schedule.backendId) {
       alert('Este horario no existe en el backend. Use "Crear" primero.');
@@ -280,55 +351,78 @@ const createSchedule = async (scheduleId: string) => {
     }
 
     const scheduleErrors = validateSchedule(schedule);
-    
+
     if (Object.keys(scheduleErrors).length > 0) {
       setErrors(prev => ({ ...prev, [scheduleId]: scheduleErrors }));
       alert('Corrija los errores antes de actualizar');
       return;
     }
 
-    // Simulación de llamada al backend
-    console.log(`PUT /api/schedules/${schedule.backendId} - Actualizando horario:`, {
-      id: schedule.backendId,
+    // Asegurar formato HH:mm:00 para el backend
+    const ensureSeconds = (timeStr: string) => {
+      if (timeStr.split(':').length === 2) return `${timeStr}:00`;
+      return timeStr;
+    };
+
+    const payload = {
       event_id: schedule.event_id,
       time_slots: schedule.time_ranges.map(range => ({
-        start_time: range.start_time,
-        end_time: range.end_time
+        id: range.id,
+        start_time: ensureSeconds(range.start_time),
+        end_time: ensureSeconds(range.end_time),
       })),
-      is_assigned: schedule.is_assigned
-    });
-    
-    setSchedules(prev => prev.map(s => 
-      s.id === scheduleId 
-        ? { ...s, isDirty: false }
-        : s
-    ));
-    
-    alert('Horario actualizado exitosamente');
+      is_assigned: schedule.is_assigned,
+    };
+    console.log("Payload to send (Update):", JSON.stringify(payload, null, 2));
+
+    try {
+      const response = await updateSchedule(payload);
+      console.log("Update success:", response);
+
+      setSchedules(prev => prev.map(s =>
+        s.id === scheduleId
+          ? { ...s, isDirty: false }
+          : s
+      ));
+
+      alert('Horario actualizado exitosamente');
+    } catch (error) {
+      console.error(error);
+      alert('Error al actualizar el horario');
+    }
   };
 
-  // Eliminar horario del backend (DELETE)
-  const deleteSchedule = (scheduleId: string) => {
+  // Eliminar un rango de horas (Slot) del backend y de la vista
+  const handleDeleteSchedule = async (rangeId: string, scheduleId: string) => {
     const schedule = schedules.find(s => s.id === scheduleId);
     if (!schedule) return;
 
-    if (!schedule.backendId) {
-      removeSchedule(scheduleId);
-      alert('Borrador de horario eliminado');
-      return;
+    // Si el ID parece ser un UUID del backend (contiene guiones), intentamos borrarlo en la DB
+    if (rangeId.includes('-')) {
+      try {
+        await apiDeleteSchedule(rangeId);
+        alert('Rango eliminado exitosamente del backend');
+      } catch (error) {
+        console.error(error);
+        alert('Error al eliminar el rango del backend');
+        return; // No eliminar de la vista si el backend falló
+      }
     }
 
-    // Simulación de llamada al backend
-    console.log(`DELETE /api/schedules/${schedule.backendId} - Eliminando horario`);
-    
+    // Eliminar de la vista local (usando la lógica de removeTimeRange)
+    removeTimeRange(scheduleId, rangeId);
+  };
+
+  // Función para quitar todo el bloque de horario de la vista (solo local por ahora)
+  const handleRemoveScheduleBlock = (scheduleId: string) => {
     removeSchedule(scheduleId);
-    alert('Horario eliminado del backend y de la vista');
+    alert('Bloque de horario omitido de la vista');
   };
 
   // Limpiar horario
   const clearSchedule = (scheduleId: string) => {
-    setSchedules(prev => prev.map(schedule => 
-      schedule.id === scheduleId 
+    setSchedules(prev => prev.map(schedule =>
+      schedule.id === scheduleId
         ? createNewEmptySchedule()
         : schedule
     ));
@@ -363,11 +457,10 @@ const createSchedule = async (scheduleId: string) => {
         {/* Lista de horarios */}
         <div className="space-y-8">
           {schedules.map((schedule, index) => (
-            <div 
-              key={schedule.id} 
-              className={`p-6 border-2 rounded-lg bg-white shadow-sm ${
-                schedule.isDirty ? 'border-yellow-300' : 'border-indigo-100'
-              }`}
+            <div
+              key={schedule.id}
+              className={`p-6 border-2 rounded-lg bg-white shadow-sm ${schedule.isDirty ? 'border-yellow-300' : 'border-indigo-100'
+                }`}
             >
               {/* Header del horario */}
               <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
@@ -386,7 +479,7 @@ const createSchedule = async (scheduleId: string) => {
                     </span>
                   )}
                 </div>
-                
+
                 {schedules.length > 1 && (
                   <button
                     type="button"
@@ -409,14 +502,14 @@ const createSchedule = async (scheduleId: string) => {
                 <select
                   value={schedule.event_id}
                   onChange={(e) => handleEventChange(schedule.id, e.target.value)}
-                  className={`w-full p-3 border bg-indigo-100 rounded-lg text-lg ${
-                    errors[schedule.id]?.event_id ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full p-3 border bg-indigo-100 rounded-lg text-lg ${errors[schedule.id]?.event_id ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 >
                   <option value="">-- Seleccione un evento --</option>
-                  {mockEvents.map(event => (
+                  {events.map(event => (
                     <option key={event.id} value={event.id}>
                       {event.title}
+
                     </option>
                   ))}
                 </select>
@@ -459,7 +552,7 @@ const createSchedule = async (scheduleId: string) => {
                         {schedule.time_ranges.length > 1 && (
                           <button
                             type="button"
-                            onClick={() => removeTimeRange(schedule.id, range.id)}
+                            onClick={() => handleDeleteSchedule(range.id, schedule.id)}
                             className="text-red-500 hover:text-red-700 text-sm"
                           >
                             Eliminar
@@ -477,6 +570,9 @@ const createSchedule = async (scheduleId: string) => {
                             onChange={(e) => handleTimeRangeChange(schedule.id, range.id, 'start_time', e.target.value)}
                             className="w-full p-2 border bg-white rounded"
                           >
+                            {!timeOptions.includes(range.start_time) && (
+                              <option value={range.start_time}>{range.start_time}</option>
+                            )}
                             {timeOptions.map(time => (
                               <option key={`${range.id}-start-${time}`} value={time}>
                                 {time}
@@ -494,6 +590,9 @@ const createSchedule = async (scheduleId: string) => {
                             onChange={(e) => handleTimeRangeChange(schedule.id, range.id, 'end_time', e.target.value)}
                             className="w-full p-2 border bg-white rounded"
                           >
+                            {!timeOptions.includes(range.end_time) && (
+                              <option value={range.end_time}>{range.end_time}</option>
+                            )}
                             {timeOptions.map(time => (
                               <option key={`${range.id}-end-${time}`} value={time}>
                                 {time}
@@ -529,13 +628,12 @@ const createSchedule = async (scheduleId: string) => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={() => createSchedule(schedule.id)}
+                  onClick={() => handleCreateSchedule(schedule.id)}
                   disabled={!!schedule.backendId}
-                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${
-                    schedule.backendId 
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                      : 'bg-green-500 text-white hover:bg-green-600'
-                  }`}
+                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${schedule.backendId
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                    }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -545,13 +643,12 @@ const createSchedule = async (scheduleId: string) => {
 
                 <button
                   type="button"
-                  onClick={() => updateSchedule(schedule.id)}
-                  disabled={!schedule.backendId || !schedule.isDirty}
-                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${
-                    !schedule.backendId || !schedule.isDirty
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
-                  }`}
+                  onClick={() => handleUpdateSchedule(schedule.id)}
+                  disabled={!schedule.backendId}
+                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${!schedule.backendId
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                    }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -561,25 +658,16 @@ const createSchedule = async (scheduleId: string) => {
 
                 <button
                   type="button"
-                  onClick={() => deleteSchedule(schedule.id)}
+                  onClick={() => handleRemoveScheduleBlock(schedule.id)}
                   className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 flex items-center justify-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  Eliminar
+                  Quitar de vista
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => clearSchedule(schedule.id)}
-                  className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 flex items-center justify-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Limpiar
-                </button>
+
               </div>
             </div>
           ))}
