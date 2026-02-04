@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import {getEventSlot, sendSession, deleteSessionService, getSessions} from "../services/sessionService"
-import {getSpeakersAll} from "../services/speakerService"
+import React, { useState, useEffect } from 'react';
+import { getEventSlot, sendSession, deleteSessionService, getSessions } from "../../services/sessionService"
+import { getSpeakersAll } from "../../services/speakerService"
 
-import type {EventWithSlots, responseSpeaker} from "../types/index"
+import type { EventWithSlots, responseSpeaker } from "../../types/index"
 
 // Definir tipos
 type SessionData = {
@@ -25,7 +25,7 @@ type SessionDataWithSpeaker = {
   title: string;
   capacity: string;
   description: string;
-  speaker:string;
+  speaker: string;
   isDirty?: boolean;
 
 };
@@ -48,7 +48,7 @@ const mockExistingSessions: SessionData[] = [
     title: 'Sesión de Apertura',
     capacity: '100',
     description: 'Introducción y bienvenida al evento',
-    
+
     isDirty: false,
   },
   {
@@ -59,7 +59,7 @@ const mockExistingSessions: SessionData[] = [
     title: 'Workshop Práctico',
     capacity: '50',
     description: 'Taller interactivo sobre nuevas tecnologías',
-  
+
     isDirty: false,
   },
 ];
@@ -73,86 +73,87 @@ const SessionForm: React.FC = () => {
   const [speaker, setSpeaker] = useState<responseSpeaker[]>();
 
   // Crear nueva sesión vacía
- const createNewEmptySession = (): SessionData => ({
-  id: Date.now().toString(),
-  event_id: '',
-  time_slot_id: '',
-  title: '',
-  capacity: '',
-  description: '',
-  speaker_id: "", 
-  isDirty: false,
-});
-
-  
-const getTimeSlotsForSession = (session: SessionData) => {
-  if (!session.event_id) return [];
-
-  const event = events.find(e => e.id === session.event_id);
-  return event?.time_slot ?? [];
-};
+  const createNewEmptySession = (): SessionData => ({
+    id: Date.now().toString(),
+    event_id: '',
+    time_slot_id: '',
+    title: '',
+    capacity: '',
+    description: '',
+    speaker_id: "",
+    isDirty: false,
+  });
 
 
- 
+  const getTimeSlotsForSession = (session: SessionData) => {
+    if (!session.event_id) return [];
+
+    const event = events.find(e => e.id === session.event_id);
+    return event?.time_slot ?? [];
+  };
+
+
+
   useEffect(() => {
-      const loadEventSlot = async () => {
-        try {
-          const response = await getEventSlot();
-    
-          setEvents(response.events)
-         
-      
-        } catch (err) {
-          console.error(err);
-        }
-      };
-    
-      loadEventSlot();
-    }, []);// meter el estado q cambia lso eventos o el horario
+    const loadEventSlot = async () => {
+      try {
+        const response = await getEventSlot();
+        console.log(response);
+
+        setEvents(response.events)
+
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadEventSlot();
+  }, []);// meter el estado q cambia lso eventos o el horario
   // si cambia solo los speaker
   useEffect(() => {
-      const loadEspeakerSlot = async () => {
-        try {
-          const response = await getSpeakersAll()
-    
-          setSpeaker(response.speaker)
-         
-      
-        } catch (err) {
-          console.error(err);
-        }
-      };
-    
-      loadEspeakerSlot();
-    }, []);// meter el estado q cambia lso eventos o el horario
+    const loadEspeakerSlot = async () => {
+      try {
+        const response = await getSpeakersAll()
+
+        setSpeaker(response.speaker)
+
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadEspeakerSlot();
+  }, []);// meter el estado q cambia lso eventos o el horario
 
   useEffect(() => {
-       const loadSession = async () => {
-         try {
-           const response = await getSessions();
-     
-           const mappedSession: SessionData[] = response.session.map((session) => ({
-             id: session.id,
-             event_id: session.event_id,
-             time_slot_id: session.time_slot_id,
-             backendId: session.id,
-             title: session.title,
-             capacity: String(session.capacity),
-             speaker_id : session.speaker_id,
-             description: session.description,
-             isDirty: false,
-           }));
-           setSessions(mappedSession)
-          // setReloadSession();
-         } catch (err) {
-           console.error(err);
-         }
-       };
-     
-       loadSession();
-     }, [reloadSession]);
-  
-  
+    const loadSession = async () => {
+      try {
+        const response = await getSessions();
+
+        const mappedSession: SessionData[] = response.session.map((session) => ({
+          id: session.id,
+          event_id: session.event_id,
+          time_slot_id: session.time_slot_id,
+          backendId: session.id,
+          title: session.title,
+          capacity: String(session.capacity),
+          speaker_id: session.speaker_id,
+          description: session.description,
+          isDirty: false,
+        }));
+        setSessions(mappedSession)
+        // setReloadSession();
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadSession();
+  }, [reloadSession]);
+
+
   // Agregar nueva sesión
   const addNewSession = () => {
     const newSession = createNewEmptySession();
@@ -163,7 +164,7 @@ const getTimeSlotsForSession = (session: SessionData) => {
   const removeSession = (sessionId: string) => {
     if (sessions.length > 1) {
       setSessions(prev => prev.filter(session => session.id !== sessionId));
-      
+
       if (errors[sessionId]) {
         const newErrors = { ...errors };
         delete newErrors[sessionId];
@@ -174,15 +175,15 @@ const getTimeSlotsForSession = (session: SessionData) => {
 
   // Manejar cambios en una sesión específica
   const handleSessionChange = (sessionId: string, field: keyof SessionData, value: string) => {
-    setSessions(prev => prev.map(session => 
-      session.id === sessionId 
+    setSessions(prev => prev.map(session =>
+      session.id === sessionId
         ? { ...session, [field]: value, isDirty: true }
         : session
     ));
 
     // Solo limpiar errores para campos que tienen validación
-    if (field === 'event_id' || field === 'time_slot_id' || 
-        field === 'title' || field === 'capacity' || field === 'description') {
+    if (field === 'event_id' || field === 'time_slot_id' ||
+      field === 'title' || field === 'capacity' || field === 'description') {
       if (errors[sessionId]?.[field as keyof SessionFormErrors]) {
         setErrors(prev => ({
           ...prev,
@@ -241,7 +242,7 @@ const getTimeSlotsForSession = (session: SessionData) => {
     if (!session) return;
 
     const sessionErrors = validateSession(session);
-    
+
     if (Object.keys(sessionErrors).length > 0) {
       setErrors(prev => ({ ...prev, [sessionId]: sessionErrors }));
       alert('Corrija los errores antes de crear');
@@ -256,24 +257,24 @@ const getTimeSlotsForSession = (session: SessionData) => {
       capacity: parseInt(session.capacity),
       description: session.description.trim(),
       speaker_id: session.speaker_id,
-      };
-   
-    try{
-        const response = await sendSession(payload);
-        const backendId = `backend-session-${Date.now()}`;
-        console.log("Backen response", response)
+    };
 
-        setSessions(prev => prev.map(s => 
-        s.id === sessionId 
+    try {
+      const response = await sendSession(payload);
+      const backendId = `backend-session-${Date.now()}`;
+      console.log("Backen response", response)
+
+      setSessions(prev => prev.map(s =>
+        s.id === sessionId
           ? { ...s, backendId, isDirty: false }
           : s
       ));
-        console.log(`Sesión "${session.title}" creada exitosamente`);
+      console.log(`Sesión "${session.title}" creada exitosamente`);
 
-    }catch (error){
-    console.error(error)
-   }  
-    
+    } catch (error) {
+      console.error(error)
+    }
+
   };
 
   // Actualizar sesión (PUT al backend)
@@ -285,13 +286,13 @@ const getTimeSlotsForSession = (session: SessionData) => {
     }
 
     const sessionErrors = validateSession(session);
-    
+
     if (Object.keys(sessionErrors).length > 0) {
       setErrors(prev => ({ ...prev, [sessionId]: sessionErrors }));
       alert('Corrija los errores antes de actualizar');
       return;
     }
-    try{
+    try {
 
       // llamada al backend
       const payload = {
@@ -301,42 +302,42 @@ const getTimeSlotsForSession = (session: SessionData) => {
         title: session.title.trim(),
         capacity: parseInt(session.capacity),
         description: session.description.trim() || null,
-        speaker_id : session.speaker_id
+        speaker_id: session.speaker_id
       }
-      
-      
-      setSessions(prev => prev.map(s => 
-        s.id === sessionId 
+
+
+      setSessions(prev => prev.map(s =>
+        s.id === sessionId
           ? { ...s, isDirty: false }
           : s
       ));
       const response = await updateSession(payload)
       console.log(`Sesión "${response.title}" actualizada exitosamente`);
-  }catch (error){
-    console.error(error)
-   }  
+    } catch (error) {
+      console.error(error)
+    }
   };
 
   // Eliminar sesión del backend (DELETE)
   const deleteSession = async (sessionId: string) => {
     const session = sessions.find(s => s.id === sessionId);
     if (!session) return;
-    try{
-    
-        // Simulación de llamada al backend
-          const response = deleteSessionService(sessionId)
-          if (!(await response).success){
-            console.log("No se pudo eliminar el speaker")
-            return
-          }
-            console.log(`Session "${session.id}" eliminado del backend`);
-            //setReloadSpeakers(prev => prev + 1);
-    
-        }catch(error){
-          console.log(error);
-    
-        }
-      setReloadSession(prev => prev + 1);
+    try {
+
+      // Simulación de llamada al backend
+      const response = deleteSessionService(sessionId)
+      if (!(await response).success) {
+        console.log("No se pudo eliminar el speaker")
+        return
+      }
+      console.log(`Session "${session.id}" eliminado del backend`);
+      //setReloadSpeakers(prev => prev + 1);
+
+    } catch (error) {
+      console.log(error);
+
+    }
+    setReloadSession(prev => prev + 1);
 
 
     if (!session.backendId) {
@@ -351,8 +352,8 @@ const getTimeSlotsForSession = (session: SessionData) => {
 
   // Limpiar sesión
   const clearSession = (sessionId: string) => {
-    setSessions(prev => prev.map(session => 
-      session.id === sessionId 
+    setSessions(prev => prev.map(session =>
+      session.id === sessionId
         ? createNewEmptySession()
         : session
     ));
@@ -368,13 +369,10 @@ const getTimeSlotsForSession = (session: SessionData) => {
     <div className="max-w-7xl mx-auto p-4">
       <div className="bg-gray-50 rounded-lg shadow-xl p-6">
         <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-xl font-bold text-blue-800">Gestión de Sesiones</h2>
-          </div>
           <button
             type="button"
             onClick={addNewSession}
-            className="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 flex items-center gap-2"
+            className="bg-[#9ACD32] text-black-200 px-4 py-2 rounded-lg hover:bg-[#9ACD32] flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -386,11 +384,10 @@ const getTimeSlotsForSession = (session: SessionData) => {
         {/* Lista de sesiones */}
         <div className="space-y-8">
           {sessions.map((session, index) => (
-            <div 
-              key={session.id} 
-              className={`p-6 border-2 rounded-lg bg-white shadow-sm ${
-                session.isDirty ? 'border-yellow-300' : 'border-indigo-100'
-              }`}
+            <div
+              key={session.id}
+              className={`p-6 border-2 rounded-lg bg-white shadow-sm ${session.isDirty ? 'border-yellow-300' : 'border-indigo-100'
+                }`}
             >
               {/* Header de la sesión */}
               <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
@@ -409,7 +406,7 @@ const getTimeSlotsForSession = (session: SessionData) => {
                     </span>
                   )}
                 </div>
-                
+
                 {sessions.length > 1 && (
                   <button
                     type="button"
@@ -459,11 +456,11 @@ const getTimeSlotsForSession = (session: SessionData) => {
                     className={`w-full p-3 border bg-indigo-50 rounded ${errors[session.id]?.time_slot_id ? 'border-red-500' : 'border-gray-300'}`}
                   >
                     <option value="">-- Seleccionar --</option>
-                     {getTimeSlotsForSession(session).map(slot => (
-                        <option key={slot.id} value={slot.id}>
-                          {slot.start_time} - {slot.end_time}
-                        </option>
-                      ))}
+                    {getTimeSlotsForSession(session).map(slot => (
+                      <option key={slot.id} value={slot.id}>
+                        {slot.start_time} - {slot.end_time}
+                      </option>
+                    ))}
 
                   </select>
                   {errors[session.id]?.time_slot_id && (
@@ -521,35 +518,35 @@ const getTimeSlotsForSession = (session: SessionData) => {
                   />
                 </div>
                 <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Speaker *
-                </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Speaker *
+                  </label>
 
-                <select
-                value={session.speaker_id ?? ''}
-                onChange={(e) =>
-                  setSessions(prev =>
-                    prev.map(s =>
-                      s.id === session.id
-                        ? {
-                            ...s,
-                            speaker_id: e.target.value,
-                            isDirty: true
-                          }
-                        : s
-                    )
-                  )
-                }
-                className={`w-full p-3 border bg-indigo-50 rounded ${errors[session.id]?.event_id ? 'border-red-500' : 'border-gray-300'}`}
-              >
-                <option value="">Seleccione speaker</option>
-                {speaker?.map(speaker => (
-                  <option key={speaker.id} value={speaker.id}>
-                    {speaker.full_name}
-                  </option>
-                ))}
-              </select>
-              </div>
+                  <select
+                    value={session.speaker_id ?? ''}
+                    onChange={(e) =>
+                      setSessions(prev =>
+                        prev.map(s =>
+                          s.id === session.id
+                            ? {
+                              ...s,
+                              speaker_id: e.target.value,
+                              isDirty: true
+                            }
+                            : s
+                        )
+                      )
+                    }
+                    className={`w-full p-3 border bg-indigo-50 rounded ${errors[session.id]?.event_id ? 'border-red-500' : 'border-gray-300'}`}
+                  >
+                    <option value="">Seleccione speaker</option>
+                    {speaker?.map(speaker => (
+                      <option key={speaker.id} value={speaker.id}>
+                        {speaker.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Contadores de caracteres */}
@@ -568,11 +565,10 @@ const getTimeSlotsForSession = (session: SessionData) => {
                   type="button"
                   onClick={() => createSession(session.id)}
                   disabled={!!session.backendId}
-                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${
-                    session.backendId 
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                      : 'bg-green-500 text-white hover:bg-green-600'
-                  }`}
+                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${session.backendId
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                    }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -584,11 +580,10 @@ const getTimeSlotsForSession = (session: SessionData) => {
                   type="button"
                   onClick={() => updateSession(session.id)}
                   disabled={!session.backendId || !session.isDirty}
-                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${
-                    !session.backendId || !session.isDirty
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
-                  }`}
+                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${!session.backendId || !session.isDirty
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                    }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

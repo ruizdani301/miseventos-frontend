@@ -1,23 +1,23 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css'
-import CreatedEvent from  "./components/CreatedEvent"
-import ScheduleForm from './components/ScheduleForm';
-import SpeakerForm from "./components/SpeakerForm"
-import SessionForm from './components/SessionForm';
-{/*import AssignmentForm from './components/AssignmentForm';*/}
+import AdminPage from './components/layout/AdminPage';
+import EventDiscovery from './components/home/EventDiscovery';
+import UserRegistrationForm from './components/register/UserRegistrationForm';
+import UserLoginForm from './components/login/UserLoginForm';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-
-
 function App() {
-
   return (
-    <>
-   <CreatedEvent/>
-   <ScheduleForm/>
-   <SpeakerForm/>
-   <SessionForm/>
-   {/* <AssignmentForm/> */}
-    </>
+    <div className="App">
+      <BrowserRouter>
+        <Routes>
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/register" element={<UserRegistrationForm />} />
+          <Route path="/login" element={<UserLoginForm />} />
+          <Route path="/" element={<EventDiscovery />} />
+        </Routes>
+      </BrowserRouter>
+    </div>
   )
 }
 

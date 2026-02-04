@@ -1,4 +1,11 @@
-import type { SendEventData, UpdateEventData, OnlyEventsResponse, DeleteEventsResponse, EventSlotListResponse } from "../types";
+import type {
+  SendEventData,
+  UpdateEventData,
+  OnlyEventsResponse,
+  DeleteEventsResponse,
+  EventSlotListResponse,
+  EventDiscoveryResponse
+} from "../types";
 
 
 
@@ -60,6 +67,19 @@ export function deleteEvents(event_id: string): Promise<DeleteEventsResponse> {
 
 export function getEventsNameSlot(): Promise<EventSlotListResponse> {
   return fetch(urlSlot, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}`);
+      }
+      return res.json();
+    });
+}
+
+export function getEvents(page: number = 1, limit: number = 10): Promise<EventDiscoveryResponse> {
+  return fetch(`${url}?page=${page}&limit=${limit}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   })

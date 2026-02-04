@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { sendSpeaker, getSpeakersAll, deleteSpeakerService, updatepeakerService } from '../services/speakerService';
+import { sendSpeaker, getSpeakersAll, deleteSpeakerService, updatepeakerService } from '../../services/speakerService';
 
 // Definir tipos
 type SpeakerData = {
@@ -24,28 +24,28 @@ const SpeakerForm: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, SpeakerFormErrors>>({});
   const [reloadSpeakers, setReloadSpeakers] = useState(0);
 
-   useEffect(() => {
-     const loadSpeaker = async () => {
-       try {
-         const response = await getSpeakersAll();
-   
-         const mappedSpeaker: SpeakerData[] = response.speaker.map((speaker) => ({
-           id: speaker.id,
-           backendId: speaker.id,
-           full_name: speaker.full_name,
-           email: speaker.email,
-           bio: speaker.bio,
-           isDirty: false,
-         }));
-   
-         setSpeakers(mappedSpeaker);
-       } catch (err) {
-         console.error(err);
-       }
-     };
-   
-     loadSpeaker();
-   }, [reloadSpeakers]);
+  useEffect(() => {
+    const loadSpeaker = async () => {
+      try {
+        const response = await getSpeakersAll();
+
+        const mappedSpeaker: SpeakerData[] = response.speaker.map((speaker) => ({
+          id: speaker.id,
+          backendId: speaker.id,
+          full_name: speaker.full_name,
+          email: speaker.email,
+          bio: speaker.bio,
+          isDirty: false,
+        }));
+
+        setSpeakers(mappedSpeaker);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadSpeaker();
+  }, [reloadSpeakers]);
 
 
   // Crear nuevo speaker vacío
@@ -67,7 +67,7 @@ const SpeakerForm: React.FC = () => {
   const removeSpeaker = (speakerId: string) => {
     if (speakers.length > 1) {
       setSpeakers(prev => prev.filter(speaker => speaker.id !== speakerId));
-      
+
       if (errors[speakerId]) {
         const newErrors = { ...errors };
         delete newErrors[speakerId];
@@ -78,8 +78,8 @@ const SpeakerForm: React.FC = () => {
 
   // Manejar cambios en un speaker específico
   const handleSpeakerChange = (speakerId: string, field: keyof SpeakerData, value: string) => {
-    setSpeakers(prev => prev.map(speaker => 
-      speaker.id === speakerId 
+    setSpeakers(prev => prev.map(speaker =>
+      speaker.id === speakerId
         ? { ...speaker, [field]: value, isDirty: true }
         : speaker
     ));
@@ -140,7 +140,7 @@ const SpeakerForm: React.FC = () => {
     if (!speaker) return;
 
     const speakerErrors = validateSpeaker(speaker);
-    
+
     if (Object.keys(speakerErrors).length > 0) {
       setErrors(prev => ({ ...prev, [speakerId]: speakerErrors }));
       alert('Corrija los errores antes de crear');
@@ -148,7 +148,7 @@ const SpeakerForm: React.FC = () => {
     }
 
     // Simulación de llamada al backend
-  
+
     const payload = {
       full_name: speaker.full_name.trim(),
       email: speaker.email.trim(),
@@ -160,23 +160,23 @@ const SpeakerForm: React.FC = () => {
       const response = await sendSpeaker(payload);
       console.log("Backen response", response)
 
-    
+
       const backendId = `backend-speaker-${Date.now()}`;
-    
-      setSpeakers(prev => prev.map(s => 
-      s.id === speakerId 
-        ? { ...s, backendId, isDirty: false }
-        : s
-    ));
-    
-    console.log(`Speaker "${speaker.full_name}" creado exitosamente`);
-   } catch (error){
-    console.error(error)
-   }
+
+      setSpeakers(prev => prev.map(s =>
+        s.id === speakerId
+          ? { ...s, backendId, isDirty: false }
+          : s
+      ));
+
+      console.log(`Speaker "${speaker.full_name}" creado exitosamente`);
+    } catch (error) {
+      console.error(error)
+    }
   };
 
   // Actualizar speaker (PUT al backend)
-  const updateSpeaker = async (speakerId: string ) => {
+  const updateSpeaker = async (speakerId: string) => {
     const speaker = speakers.find(s => s.id === speakerId);
     if (!speaker || !speaker.backendId) {
       alert('Este speaker no existe en el backend. Use "Crear" primero.');
@@ -184,7 +184,7 @@ const SpeakerForm: React.FC = () => {
     }
 
     const speakerErrors = validateSpeaker(speaker);
-    
+
     if (Object.keys(speakerErrors).length > 0) {
       setErrors(prev => ({ ...prev, [speakerId]: speakerErrors }));
       alert('Corrija los errores antes de actualizar');
@@ -198,27 +198,27 @@ const SpeakerForm: React.FC = () => {
       email: speaker.email.trim(),
       bio: speaker.bio.trim(),
     };
-     try {
+    try {
 
       const response = await updatepeakerService(payload);
       console.log("Backen response", response)
       setReloadSpeakers(prev => prev + 1);
 
-    
+
       //const backendId = `backend-speaker-${Date.now()}`;
-    
-    //   setSpeakers(prev => prev.map(s => 
-    //   s.id === speakerId 
-    //     ? { ...s, backendId, isDirty: false }
-    //     : s
-    // ));
-    
-    console.log(`Speaker "${speaker.full_name}" actualizado exitosamente`);
-   } catch (error){
-    console.error(error)
-   }
+
+      //   setSpeakers(prev => prev.map(s => 
+      //   s.id === speakerId 
+      //     ? { ...s, backendId, isDirty: false }
+      //     : s
+      // ));
+
+      console.log(`Speaker "${speaker.full_name}" actualizado exitosamente`);
+    } catch (error) {
+      console.error(error)
+    }
   };
-  
+
 
   // Eliminar speaker del backend (DELETE)
   const deleteSpeaker = async (speakerId: string) => {
@@ -227,21 +227,21 @@ const SpeakerForm: React.FC = () => {
 
     if (!speaker.backendId) {
       removeSpeaker(speakerId);
-     // alert('Borrador de speaker eliminado');
+      // alert('Borrador de speaker eliminado');
       return;
     }
-    try{
+    try {
 
-    // Simulación de llamada al backend
-      const response =  await deleteSpeakerService(speaker.backendId);
-      if (!response.success){
+      // Simulación de llamada al backend
+      const response = await deleteSpeakerService(speaker.backendId);
+      if (!response.success) {
         console.log("No se pudo eliminar el speaker")
         return
       }
-        console.log(`Speaker "${speaker.full_name}" eliminado del backend`);
-        setReloadSpeakers(prev => prev + 1);
+      console.log(`Speaker "${speaker.full_name}" eliminado del backend`);
+      setReloadSpeakers(prev => prev + 1);
 
-    }catch(error){
+    } catch (error) {
       console.log(error);
 
     }
@@ -249,8 +249,8 @@ const SpeakerForm: React.FC = () => {
 
   // Limpiar speaker
   const clearSpeaker = (speakerId: string) => {
-    setSpeakers(prev => prev.map(speaker => 
-      speaker.id === speakerId 
+    setSpeakers(prev => prev.map(speaker =>
+      speaker.id === speakerId
         ? createNewEmptySpeaker()
         : speaker
     ));
@@ -266,14 +266,10 @@ const SpeakerForm: React.FC = () => {
     <div className="max-w-7xl mx-auto p-4">
       <div className="bg-gray-50 rounded-lg shadow-xl p-6">
         <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-xl font-bold text-blue-800">Gestión de Ponentes</h2>
-            <p className="text-gray-600 text-sm mt-1">CRUD independiente para cada ponente</p>
-          </div>
           <button
             type="button"
             onClick={addNewSpeaker}
-            className="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 flex items-center gap-2"
+            className="bg-[#9ACD32] text-black-200 px-4 py-2 rounded-lg hover:bg-[#9ACD32] flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -285,11 +281,10 @@ const SpeakerForm: React.FC = () => {
         {/* Lista de speakers */}
         <div className="space-y-8">
           {speakers.map((speaker, index) => (
-            <div 
-              key={speaker.id} 
-              className={`p-6 border-2 rounded-lg bg-white shadow-sm ${
-                speaker.isDirty ? 'border-yellow-300' : 'border-indigo-100'
-              }`}
+            <div
+              key={speaker.id}
+              className={`p-6 border-2 rounded-lg bg-white shadow-sm ${speaker.isDirty ? 'border-yellow-300' : 'border-indigo-100'
+                }`}
             >
               {/* Header del speaker */}
               <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
@@ -308,7 +303,7 @@ const SpeakerForm: React.FC = () => {
                     </span>
                   )}
                 </div>
-                
+
                 {speakers.length > 1 && (
                   <button
                     type="button"
@@ -335,9 +330,8 @@ const SpeakerForm: React.FC = () => {
                     value={speaker.full_name}
                     onChange={(e) => handleSpeakerChange(speaker.id, 'full_name', e.target.value)}
                     placeholder="Ej: Juan Pérez González"
-                    className={`w-full p-3 border bg-indigo-100 rounded-lg ${
-                      errors[speaker.id]?.full_name ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`w-full p-3 border bg-indigo-100 rounded-lg ${errors[speaker.id]?.full_name ? 'border-red-500' : 'border-gray-300'
+                      }`}
                   />
                   {errors[speaker.id]?.full_name && (
                     <p className="text-red-500 text-sm mt-1">{errors[speaker.id]?.full_name}</p>
@@ -354,9 +348,8 @@ const SpeakerForm: React.FC = () => {
                     value={speaker.email}
                     onChange={(e) => handleSpeakerChange(speaker.id, 'email', e.target.value)}
                     placeholder="Ej: juan.perez@empresa.com"
-                    className={`w-full p-3 border bg-indigo-100 rounded-lg ${
-                      errors[speaker.id]?.email ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`w-full p-3 border bg-indigo-100 rounded-lg ${errors[speaker.id]?.email ? 'border-red-500' : 'border-gray-300'
+                      }`}
                   />
                   {errors[speaker.id]?.email && (
                     <p className="text-red-500 text-sm mt-1">{errors[speaker.id]?.email}</p>
@@ -373,9 +366,8 @@ const SpeakerForm: React.FC = () => {
                     onChange={(e) => handleSpeakerChange(speaker.id, 'bio', e.target.value)}
                     rows={4}
                     placeholder="Descripción profesional, experiencia, especialización..."
-                    className={`w-full p-3 border bg-indigo-100 rounded-lg ${
-                      errors[speaker.id]?.bio ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`w-full p-3 border bg-indigo-100 rounded-lg ${errors[speaker.id]?.bio ? 'border-red-500' : 'border-gray-300'
+                      }`}
                   />
                   {errors[speaker.id]?.bio && (
                     <p className="text-red-500 text-sm mt-1">{errors[speaker.id]?.bio}</p>
@@ -384,10 +376,9 @@ const SpeakerForm: React.FC = () => {
                     <p className="text-xs text-gray-500">
                       Mínimo 10 caracteres, máximo 500
                     </p>
-                    <p className={`text-xs ${
-                      speaker.bio.length < 10 ? 'text-red-500' : 
+                    <p className={`text-xs ${speaker.bio.length < 10 ? 'text-red-500' :
                       speaker.bio.length > 500 ? 'text-red-500' : 'text-green-500'
-                    }`}>
+                      }`}>
                       {speaker.bio.length}/500 caracteres
                       {speaker.bio.length < 10 && ` (faltan ${10 - speaker.bio.length})`}
                     </p>
@@ -401,11 +392,10 @@ const SpeakerForm: React.FC = () => {
                   type="button"
                   onClick={() => createSpeaker(speaker.id)}
                   disabled={!!speaker.backendId}
-                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${
-                    speaker.backendId 
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                      : 'bg-green-500 text-white hover:bg-green-600'
-                  }`}
+                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${speaker.backendId
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                    }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -417,11 +407,10 @@ const SpeakerForm: React.FC = () => {
                   type="button"
                   onClick={() => updateSpeaker(speaker.id)}
                   disabled={!speaker.backendId || !speaker.isDirty}
-                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${
-                    !speaker.backendId || !speaker.isDirty
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
-                  }`}
+                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${!speaker.backendId || !speaker.isDirty
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                    }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

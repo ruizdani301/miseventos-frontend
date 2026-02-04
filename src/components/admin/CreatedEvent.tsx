@@ -1,39 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import {sendEvents, updateEvents, getEventsAll, deleteEvents} from '../services/eventService';
-import type {EventStatus, EventFormErrors, EventData} from '../types/index'; 
+import { sendEvents, updateEvents, getEventsAll, deleteEvents } from '../../services/eventService';
+import type { EventStatus, EventFormErrors, EventData } from '../../types/index';
 
 
 const CreatedEvent: React.FC = () => {
   const [events, setEvents] = useState<EventData[]>([]);
   const [errors, setErrors] = useState<Record<string, EventFormErrors>>({});
 
-useEffect(() => {
-  const loadEvents = async () => {
-    try {
-      const response = await getEventsAll();
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        const response = await getEventsAll();
 
-      const mappedEvents: EventData[] = response.events.map((event) => ({
-        id: event.id,
-        backendId: event.id,
-        title: event.title,
-        description: event.description,
-        start_date: event.start_date,
-        end_date: event.end_date,
-        original_start_date: event.start_date,
-        original_end_date: event.end_date,
-        capacity: String(event.capacity),
-        status: event.status,
-        isDirty: false,
-      }));
+        const mappedEvents: EventData[] = response.events.map((event) => ({
+          id: event.id,
+          backendId: event.id,
+          title: event.title,
+          description: event.description,
+          start_date: event.start_date,
+          end_date: event.end_date,
+          original_start_date: event.start_date,
+          original_end_date: event.end_date,
+          capacity: String(event.capacity),
+          status: event.status,
+          isDirty: false,
+        }));
 
-      setEvents(mappedEvents);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+        setEvents(mappedEvents);
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-  loadEvents();
-}, []);
+    loadEvents();
+  }, []);
 
 
   const createNewEmptyEvent = (): EventData => ({
@@ -66,14 +66,14 @@ useEffect(() => {
   };
 
   const handleEventChange = (eventId: string, field: keyof EventData, value: string) => {
-    setEvents(prev => prev.map(event => 
-      event.id === eventId 
+    setEvents(prev => prev.map(event =>
+      event.id === eventId
         ? { ...event, [field]: value, isDirty: true }
         : event
     ));
 
-      if (field === 'title' || field === 'description' || field === 'start_date' || 
-        field === 'end_date' || field === 'capacity') {
+    if (field === 'title' || field === 'description' || field === 'start_date' ||
+      field === 'end_date' || field === 'capacity') {
       if (errors[eventId]?.[field as keyof EventFormErrors]) {
         setErrors(prev => ({
           ...prev,
@@ -87,8 +87,8 @@ useEffect(() => {
   };
 
   const handleStatusChange = (eventId: string, value: EventStatus) => {
-    setEvents(prev => prev.map(event => 
-      event.id === eventId 
+    setEvents(prev => prev.map(event =>
+      event.id === eventId
         ? { ...event, status: value, isDirty: true }
         : event
     ));
@@ -108,7 +108,7 @@ useEffect(() => {
 
     if (!event.title.trim()) eventErrors.title = 'Título requerido';
     if (!event.description.trim()) eventErrors.description = 'Descripción requerida';
-    
+
     if (!event.start_date) {
       eventErrors.start_date = 'Fecha inicio requerida';
     } else if (new Date(event.start_date) < new Date()) {
@@ -127,7 +127,7 @@ useEffect(() => {
       eventErrors.capacity = 'Debe ser mayor a 0';
     }
     const startDateChanged =
-    event.start_date !== event.original_start_date;
+      event.start_date !== event.original_start_date;
 
     if (!event.start_date) {
       eventErrors.start_date = 'Fecha inicio requerida';
@@ -147,7 +147,7 @@ useEffect(() => {
     if (!event) return;
 
     const eventErrors = validateEvent(event);
-    
+
     if (Object.keys(eventErrors).length > 0) {
       setErrors(prev => ({ ...prev, [eventId]: eventErrors }));
       alert('Corrija los errores antes de crear');
@@ -165,13 +165,13 @@ useEffect(() => {
     })
 
     const backendId = `backend-${Date.now()}`;
-    
-    setEvents(prev => prev.map(e => 
-      e.id === eventId 
+
+    setEvents(prev => prev.map(e =>
+      e.id === eventId
         ? { ...e, backendId, isDirty: false }
         : e
     ));
-    
+
     console.log(responseData)
   };
 
@@ -183,7 +183,7 @@ useEffect(() => {
     }
 
     const eventErrors = validateEvent(event);
-    
+
     if (Object.keys(eventErrors).length > 0) {
       setErrors(prev => ({ ...prev, [eventId]: eventErrors }));
       alert('Corrija los errores antes de actualizar');
@@ -199,41 +199,42 @@ useEffect(() => {
       capacity: parseInt(event.capacity),
       status: event.status
     })
-    
-    setEvents(prev => prev.map(e => 
-      e.id === eventId 
+
+    setEvents(prev => prev.map(e =>
+      e.id === eventId
         ? { ...e, isDirty: false }
         : e
     ));
-    
+
     alert(`Evento "${event.title}" actualizado exitosamente`);
   };
 
-const deleteEvent = async (eventId: string) => {
-  const event = events.find(e => e.id === eventId);
-  if (!event) return;
+  const deleteEvent = async (eventId: string) => {
+    const event = events.find(e => e.id === eventId);
+    if (!event) return;
 
-   if (!event.backendId) {
-    removeEvent(eventId);
-    alert('Borrador de evento eliminado');
-    return;
-  }
-
-  try {
-     const response = await deleteEvents(event.backendId);
-
-    if (!response.success) {
-      alert('No se pudo eliminar el evento');
+    if (!event.backendId) {
+      alert(eventId)
+      removeEvent(eventId);
+      alert('Borrador de evento eliminado');
       return;
     }
 
-     removeEvent(eventId);
-    alert(`Evento "${event.title}" eliminado`);
-  } catch (error) {
-    console.error(error);
-    alert('Error eliminando el evento');
-  }
-};
+    try {
+      const response = await deleteEvents(event.backendId);
+
+      if (!response.success) {
+        alert('No se pudo eliminar el evento');
+        return;
+      }
+
+      removeEvent(eventId);
+      alert(`Evento "${event.title}" eliminado`);
+    } catch (error) {
+      console.error(error);
+      alert('Error eliminando el evento');
+    }
+  };
 
   // const clearEvent = (eventId: string) => {
   //   setEvents(prev => prev.map(event => 
@@ -253,13 +254,10 @@ const deleteEvent = async (eventId: string) => {
     <div className="max-w-7xl mx-auto p-4">
       <div className="bg-gray-50 rounded-lg shadow-xl p-6">
         <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-xl font-bold text-blue-800">Gestión de Eventos</h2>
-          </div>
           <button
             type="button"
             onClick={addNewEvent}
-            className="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 flex items-center gap-2"
+            className="bg-[#9ACD32] text-black-200 px-4 py-2 rounded-lg hover:bg-[#9ACD32] flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -270,11 +268,10 @@ const deleteEvent = async (eventId: string) => {
 
         <div className="space-y-8">
           {events.map((event, index) => (
-            <div 
-              key={event.id} 
-              className={`p-6 border-2 rounded-lg bg-white shadow-sm ${
-                event.isDirty ? 'border-yellow-300' : 'border-indigo-100'
-              }`}
+            <div
+              key={event.id}
+              className={`p-6 border-2 rounded-lg bg-white shadow-sm ${event.isDirty ? 'border-yellow-300' : 'border-indigo-100'
+                }`}
             >
               {/* Header */}
               <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
@@ -293,7 +290,7 @@ const deleteEvent = async (eventId: string) => {
                     </span>
                   )}
                 </div>
-                
+
                 {events.length > 1 && (
                   <button
                     type="button"
@@ -416,11 +413,10 @@ const deleteEvent = async (eventId: string) => {
                   type="button"
                   onClick={() => createEvent(event.id)}
                   disabled={!!event.backendId}
-                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${
-                    event.backendId 
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                      : 'bg-green-500 text-white hover:bg-green-600'
-                  }`}
+                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${event.backendId
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                    }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -432,11 +428,10 @@ const deleteEvent = async (eventId: string) => {
                   type="button"
                   onClick={() => updateEvent(event.id)}
                   disabled={!event.backendId || !event.isDirty}
-                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${
-                    !event.backendId || !event.isDirty
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
-                  }`}
+                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${!event.backendId || !event.isDirty
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                    }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

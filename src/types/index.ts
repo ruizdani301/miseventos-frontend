@@ -1,4 +1,3 @@
-import { Session } from "inspector";
 
 export type EventStatus = 'published' | 'closed';
 
@@ -94,6 +93,8 @@ export type EventData = {
   backendId?: string;
   isDirty?: boolean;
 };
+
+
 
 export type TimeRange = {
   id?: string
@@ -241,4 +242,85 @@ export type SlotResponse = {
   success: boolean,
   error_message: null,
   slot: slotReference
+}
+
+export type Speaker = {
+  id: string;
+  full_name: string;
+  email: string;
+  bio: string;
+  created_at: string;
+}
+
+export type TimeSlot = {
+  id: string;
+  start_time: string;
+  end_time: string;
+  event_id: string;
+  is_assigned: boolean;
+  created_at: string;
+}
+
+export type Session = {
+  session: {
+    id: string;
+    title: string;
+    description: string;
+    created_at: string;
+    event_id: string;
+    capacity: number;
+    time_slot_id: string;
+  };
+  time_slot: TimeSlot;
+  speakers: Speaker[];
+}
+
+export type Event = {
+  id: string;
+  title: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+  capacity: number;
+  status: string;
+  created_at: string;
+}
+
+export type EventItem = {
+  event: Event;
+  sessions: Session[];
+}
+export type EventDiscoveryResponse = {
+  success: boolean;
+  error_message: string | null,
+  total: number,
+  page: number,
+  page_size: number,
+  total_pages: number,
+  events: EventItem[];
+}
+
+export type UserCreate = {
+  email: string
+  password: string
+  role: string
+}
+
+// tipos de registro de sesion
+export type SessionRegister = {
+  event_id: string
+  session_id: string
+}
+
+export type SessionDetailRegister = {
+  id: string
+  event_id: string
+  session_id: string
+  number_registered: number
+}
+
+export type SessionRegisterResponse = {
+  success: boolean,
+  error_message: string | null,
+  session_detail: SessionDetailRegister
 }
