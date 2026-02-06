@@ -269,6 +269,8 @@ export type Session = {
     created_at: string;
     event_id: string;
     capacity: number;
+    registrations_count: number;
+    user_registration_id: string;
     time_slot_id: string;
   };
   time_slot: TimeSlot;
@@ -283,6 +285,7 @@ export type Event = {
   end_date: string;
   capacity: number;
   status: string;
+  registrations_count: number;
   created_at: string;
 }
 
@@ -301,6 +304,12 @@ export type EventDiscoveryResponse = {
 }
 
 export type UserCreate = {
+  email: string
+  password: string
+  role: string
+}
+export type UserUpdate = {
+  id: string
   email: string
   password: string
   role: string
@@ -324,3 +333,35 @@ export type SessionRegisterResponse = {
   error_message: string | null,
   session_detail: SessionDetailRegister
 }
+
+export type LogoutResponse = {
+  success: boolean,
+  message: string | null
+}
+
+export const Role = {
+  ADMIN: 'admin',
+  ASSISTANT: 'assistant',
+} as const;
+
+export type RoleType = typeof Role[keyof typeof Role];
+
+export type User = {
+  id: string;
+  email: string;
+  password: string;
+  role: RoleType;
+}
+
+
+export type UserListResponse = {
+  success: boolean,
+  error_message: string | null,
+  users: User[]
+}
+
+export type DeleteUserResponse = {
+  id: string;
+  success: boolean;
+  error_message: string | null;
+};

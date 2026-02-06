@@ -82,6 +82,7 @@ export function getEvents(page: number = 1, limit: number = 10): Promise<EventDi
   return fetch(`${url}?page=${page}&limit=${limit}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
   })
     .then(res => {
       if (!res.ok) {

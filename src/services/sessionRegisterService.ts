@@ -23,7 +23,6 @@ export function deleteRegisterSession(
     id: string
 ): Promise<SessionRegisterResponse> {
     console.log(JSON.stringify(id, null, 2));
-    alert(`${url}${id}/`);
     return fetch(`${url}${id}`, {
         method: "DELETE",
         credentials: "include",
