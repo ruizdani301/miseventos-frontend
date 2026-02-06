@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Users, User, Info, CheckCircle, XCircle, MapPin, LogOut } from 'lucide-react';
+import { Clock, Users, User, Info, CheckCircle, XCircle, MapPin, LogOut, Search } from 'lucide-react';
 import { getEvents } from '../../services/eventService';
 import type { EventItem, SessionRegister } from '../../types';
 import Pagination from '../common/Pagination';
 import { registerSession, deleteRegisterSession } from '../../services/sessionRegisterService';
-import { logout } from '../../services/authService';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -44,16 +44,21 @@ const EventDiscovery: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [pageSize] = useState(10);
 
+    // Search state
+    const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
     const navigate = useNavigate();
 
-    const fetchEventsData = async (page: number, silent: boolean = false) => {
+    const fetchEventsData = async (page: number, silent: boolean = false, search?: string) => {
         // Only show loading skeleton if not a silent refresh
         if (!silent) {
             setLoading(true);
         }
 
         try {
-            const response = await getEvents(page, pageSize);
+            const response = await getEvents(page, pageSize, search);
+            console.log(response);
             if (response && response.success && response.events) {
                 setData(response.events);
                 setTotalPages(response.total_pages || 1);
@@ -83,9 +88,29 @@ const EventDiscovery: React.FC = () => {
         }
     };
 
+    // Debounce search term
     useEffect(() => {
-        fetchEventsData(currentPage);
-    }, [currentPage]);
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    // Fetch events when debounced search term or page changes
+    useEffect(() => {
+        // Reset to page 1 when search term changes
+        if (debouncedSearchTerm !== searchTerm) return;
+
+        fetchEventsData(currentPage, false, debouncedSearchTerm);
+    }, [currentPage, debouncedSearchTerm]);
+
+    // Reset to page 1 when search term changes
+    useEffect(() => {
+        if (currentPage !== 1) {
+            setCurrentPage(1);
+        }
+    }, [debouncedSearchTerm]);
 
     const formatTime = (time: string) => {
         if (!time) return "00:00";
@@ -150,13 +175,14 @@ const EventDiscovery: React.FC = () => {
             alert('Error al conectar con el servidor');
         }
     };
+    const { logout: logoutCtx } = useAuth();
+
     const handleLogout = async () => {
-        const response = await logout();
-        if (response.success) {
+        try {
+            await logoutCtx();
             navigate('/login');
-        }
-        else {
-            console.error('Error al cerrar sesión');
+        } catch (error) {
+            console.error('Error al cerrar sesión', error);
         }
     };
     const handlePageChange = (page: number) => {
@@ -174,21 +200,84 @@ const EventDiscovery: React.FC = () => {
 
     return (
         <section className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-10 relative">
-            <header className="flex justify-between items-start gap-4">
-                <div className="space-y-3">
-                    <h1 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight">Descubre los Eventos</h1>
-                    <p className="text-base md:text-xl text-gray-600 font-medium max-w-3xl">Explora y regístrate en las sesiones disponibles.</p>
+            <header className="space-y-6">
+                <div className="flex justify-between items-start gap-4">
+                    <header className="relative bg-white border-b border-gray-100 pb-8 mb-4">
+                        {/* Contenedor Horizontal Principal */}
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+
+                            {/* Bloque Izquierdo: Título Compacto */}
+                            <div className="flex-shrink-0">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <span className="h-[2px] w-8 bg-[#9ACD32]"></span>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">Directorio</span>
+                                </div>
+                                <h1 className="text-4xl md:text-6xl font-black text-gray-900 tracking-tighter uppercase leading-none">
+                                    Nuestros <br />
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#9ACD32] to-[#74a123]">
+                                        Eventos
+                                    </span>
+                                </h1>
+                            </div>
+
+                            {/* Bloque Derecho: Info + Stats en Fila */}
+                            <div className="flex flex-col md:flex-row md:items-center gap-8 lg:gap-12 flex-grow max-w-4xl">
+
+                                {/* Separador vertical solo en desktop */}
+                                <div className="hidden lg:block w-[1px] h-16 bg-gray-100"></div>
+
+                                {/* Descripción */}
+                                <div className="flex-grow">
+                                    <p className="text-sm md:text-base text-gray-500 font-medium leading-relaxed max-w-sm">
+                                        Explora y regístrate en sesiones
+                                        <span className="text-gray-900 font-bold italic"> exclusivas </span>
+                                        diseñadas para mentes vibrantes.
+                                    </p>
+                                </div>
+
+                                {/* Stats en formato horizontal pequeño */}
+                                <div className="flex items-center gap-6 bg-gray-50 px-6 py-4 rounded-2xl border border-gray-100 shadow-sm">
+                                    <div className="text-center">
+                                        <p className="text-xl font-black text-gray-900 leading-none">Sesiones</p>
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mt-1">Disponibles</p>
+                                    </div>
+                                    <div className="w-[1px] h-8 bg-gray-200"></div>
+                                    <div className="text-center">
+                                        <div className="flex items-center gap-1 justify-center">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-[#9ACD32] animate-pulse"></span>
+                                            <p className="text-xl font-black text-[#9ACD32] leading-none">LIVE</p>
+                                        </div>
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mt-1">Status</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Botón Logout Responsivo */}
+                    <button
+                        onClick={() => handleLogout()}
+                        className="bg-[#9ACD32] hover:bg-[#b5f04b] text-black font-black p-3 md:px-5 md:py-2.5 rounded-full transition-all flex items-center justify-center gap-2 uppercase text-sm border-b-4 border-[#74a123] active:border-b-0 active:translate-y-1 shadow-lg"
+                        title="Cerrar sesión"
+                    >
+                        <LogOut size={20} strokeWidth={3} />
+                        <span className="hidden md:block">Cerrar Sesión</span>
+                    </button>
                 </div>
 
-                {/* Botón Logout Responsivo */}
-                <button
-                    onClick={() => handleLogout()}
-                    className="bg-[#9ACD32] hover:bg-[#b5f04b] text-black font-black p-3 md:px-5 md:py-2.5 rounded-full transition-all flex items-center justify-center gap-2 uppercase text-sm border-b-4 border-[#74a123] active:border-b-0 active:translate-y-1 shadow-lg"
-                    title="Cerrar sesión"
-                >
-                    <LogOut size={20} strokeWidth={3} />
-                    <span className="hidden md:block">Cerrar Sesión</span>
-                </button>
+                {/* Search Bar */}
+                <div className="relative max-w-2xl">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Search className="text-gray-400" size={20} />
+                    </div>
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Buscar eventos por título..."
+                        className="w-full bg-[#333333] text-white border-2 border-white/10 focus:border-[#9ACD32] rounded-2xl pl-12 pr-4 py-3 placeholder-gray-400 focus:outline-none transition-all shadow-lg"
+                    />
+                </div>
             </header>
 
             <div className="space-y-8">

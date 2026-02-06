@@ -137,21 +137,6 @@ const Roles: React.FC = () => {
                 <div className="p-6">
                     {/* Formulario */}
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        {/* <div className="space-y-1">
-                            <label className="text-xs font-semibold text-gray-600 uppercase">Nombre</label>
-                            <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleInputChange}
-                                    placeholder="Nombre completo"
-                                    className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-[#9ACD32] focus:border-transparent outline-none transition-all"
-                                    required
-                                />
-                            </div>
-                        </div> */}
 
                         <div className="space-y-1">
                             <label className="text-xs font-semibold text-gray-600 uppercase">Email</label>
@@ -224,7 +209,6 @@ const Roles: React.FC = () => {
                         <table className="w-full border-collapse text-left">
                             <thead>
                                 <tr className="bg-gray-50 border-b border-gray-200">
-                                    {/* <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Usuario</th> */}
                                     <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
                                     <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Rol</th>
                                     <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Acciones</th>
@@ -233,15 +217,15 @@ const Roles: React.FC = () => {
                             <tbody className="divide-y divide-gray-100">
                                 {users.map(user => (
                                     <tr key={user.id} className="hover:bg-gray-50 transition-colors group">
-                                        {/* <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-xs">
                                                     {user.email.charAt(0)}
                                                 </div>
                                                 <span className="font-medium text-gray-700">{user.email}</span>
                                             </div>
-                                        </td> */}
-                                        <td className="px-6 py-4 whitespace-nowrap text-gray-600">{user.email}</td>
+                                        </td>
+                                        {/* <td className="px-6 py-4 whitespace-nowrap text-gray-600">{user.email}</td> */}
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 py-1 rounded text-xs font-bold ${user.role === 'admin' ? 'bg-red-100 text-red-600' :
                                                 user.role === 'assistant' ? 'bg-blue-100 text-blue-600' :

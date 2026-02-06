@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, Loader2, LogIn, AlertCircle } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
-import { loginUser } from '../../services/authService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const UserLoginForm: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -13,6 +13,7 @@ const UserLoginForm: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
+    const { login } = useAuth();
 
     const validateEmail = (email: string) => {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -29,9 +30,8 @@ const UserLoginForm: React.FC = () => {
 
         setIsLoading(true);
         try {
-            const response = await loginUser(formData.email, formData.password);
-            console.log("Login response:", response);
-            // Redirección al Home tras éxito
+            await login(formData.email, formData.password);
+            console.log("Login success");
             navigate('/');
         } catch (err: any) {
             setError(err.message || 'Error al iniciar sesión. Verifica tus credenciales.');

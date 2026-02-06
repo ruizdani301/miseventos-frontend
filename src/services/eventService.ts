@@ -78,8 +78,10 @@ export function getEventsNameSlot(): Promise<EventSlotListResponse> {
     });
 }
 
-export function getEvents(page: number = 1, limit: number = 10): Promise<EventDiscoveryResponse> {
-  return fetch(`${url}?page=${page}&limit=${limit}`, {
+export function getEvents(page: number = 1, limit: number = 10, search?: string): Promise<EventDiscoveryResponse> {
+  const newSearch = search?.trim() || "";
+
+  return fetch(`${url}?page=${page}&limit=${limit}&title=${newSearch}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
     credentials: "include",

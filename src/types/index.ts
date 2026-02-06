@@ -353,6 +353,11 @@ export type User = {
   role: RoleType;
 }
 
+export type UserAuthResponse = {
+  id: string;
+  email: string;
+  role: RoleType;
+}
 
 export type UserListResponse = {
   success: boolean,
