@@ -1,11 +1,10 @@
 import type { SessionRegister, SessionRegisterResponse } from "../types";
 
-const url = 'http://127.0.0.1:8000/api/v1/register-session/';
 export function registerSession(
     session: SessionRegister
 ): Promise<SessionRegisterResponse> {
     console.log(JSON.stringify(session, null, 2));
-    return fetch(url, {
+    return fetch(`${import.meta.env.VITE_API_URL}/register-session/`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -23,7 +22,7 @@ export function deleteRegisterSession(
     id: string
 ): Promise<SessionRegisterResponse> {
     console.log(JSON.stringify(id, null, 2));
-    return fetch(`${url}${id}`, {
+    return fetch(`${import.meta.env.VITE_API_URL}/register-session/${id}`, {
         method: "DELETE",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

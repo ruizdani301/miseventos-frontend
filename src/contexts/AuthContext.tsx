@@ -40,8 +40,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const login = async (email: string, password?: string) => {
         setLoading(true);
         try {
+            console.log("Attempting Login for:", email, "Password provided:", !!password);
             const response = await loginUser(email, password);
             // Assuming the login response contains the user object or we need to fetch it
+
             if (response.success) {
                 await checkAuth(); // Re-validate session to get user data
             }

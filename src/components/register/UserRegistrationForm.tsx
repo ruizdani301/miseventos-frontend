@@ -34,13 +34,17 @@ const UserRegistrationForm: React.FC = () => {
 
         setIsLoading(true);
         try {
-            await sendUser({
+            const response = await sendUser({
                 email: formData.email,
                 password: formData.password,
                 role: 'assistant'
             });
-            setFeedback({ type: 'success', message: '¡Registro exitoso! Ya puedes iniciar sesión.' });
-            setFormData({ email: '', password: '' });
+            if (response.status !== 400) {
+                setFeedback({ type: 'success', message: '¡Registro exitoso! Ya puedes iniciar sesión.' });
+                setFormData({ email: '', password: '' });
+            } else {
+                setFeedback({ type: 'error', message: 'El usuario ya existe.' });
+            }
         } catch (error: any) {
             setFeedback({
                 type: 'error',

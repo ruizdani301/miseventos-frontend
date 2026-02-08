@@ -247,20 +247,20 @@ const SpeakerForm: React.FC = () => {
     }
   };
 
-  // Limpiar speaker
-  const clearSpeaker = (speakerId: string) => {
-    setSpeakers(prev => prev.map(speaker =>
-      speaker.id === speakerId
-        ? createNewEmptySpeaker()
-        : speaker
-    ));
+  // // Limpiar speaker
+  // const clearSpeaker = (speakerId: string) => {
+  //   setSpeakers(prev => prev.map(speaker =>
+  //     speaker.id === speakerId
+  //       ? createNewEmptySpeaker()
+  //       : speaker
+  //   ));
 
-    if (errors[speakerId]) {
-      const newErrors = { ...errors };
-      delete newErrors[speakerId];
-      setErrors(newErrors);
-    }
-  };
+  //   if (errors[speakerId]) {
+  //     const newErrors = { ...errors };
+  //     delete newErrors[speakerId];
+  //     setErrors(newErrors);
+  //   }
+  // };
 
   return (
     <div className="max-w-7xl mx-auto p-4">

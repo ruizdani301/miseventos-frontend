@@ -1,15 +1,22 @@
-import type { SpeakerCreate, updateRequest, responseSpeaker, DeleteSpeakerResponse, speakerListResponse, speakerResponse } from "../types/index"
+import type {
+  SpeakerCreate,
+  updateRequest,
+  responseSpeaker,
+  DeleteSpeakerResponse,
+  speakerListResponse,
+  speakerResponse
+} from "../types/index"
 
-const url = "http://127.0.0.1:8000/api/v1/speaker/"
 
 export function sendSpeaker(
   speaker: SpeakerCreate
 ): Promise<speakerResponse> {
   console.log(JSON.stringify(speaker, null, 2));
 
-  return fetch(url, {
+  return fetch(`${import.meta.env.VITE_API_URL}/speaker/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(speaker),
   })
     .then(res => {
@@ -21,9 +28,10 @@ export function sendSpeaker(
 }
 
 export function getSpeakersAll(): Promise<speakerListResponse> {
-  return fetch(url, {
+  return fetch(`${import.meta.env.VITE_API_URL}/speaker/`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
   })
     .then(res => {
       if (!res.ok) {
@@ -34,9 +42,10 @@ export function getSpeakersAll(): Promise<speakerListResponse> {
 }
 
 export function deleteSpeakerService(speaker_id: string): Promise<DeleteSpeakerResponse> {
-  return fetch(`http://127.0.0.1:8000/api/v1/speaker/${speaker_id}`, {
+  return fetch(`${import.meta.env.VITE_API_URL}/speaker/${speaker_id}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
   })
     .then(res => {
       if (!res.ok) {
@@ -47,9 +56,10 @@ export function deleteSpeakerService(speaker_id: string): Promise<DeleteSpeakerR
 }
 
 export function updatepeakerService(speaker: updateRequest): Promise<responseSpeaker> {
-  return fetch(`http://127.0.0.1:8000/api/v1/speaker/`, {
+  return fetch(`${import.meta.env.VITE_API_URL}/speaker/`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(speaker),
   })
     .then(res => {

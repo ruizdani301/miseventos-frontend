@@ -1,3 +1,5 @@
+//const response = await fetch(`${import.meta.env.VITE_API_URL}/endpoint`);
+
 import type {
   EventSlotListResponse,
   SessionCompleteResponse,
@@ -7,14 +9,13 @@ import type {
   SessionUpdate
 } from "../types/index"
 
-const url = "http://127.0.0.1:8000/api/v1/event/slot/"
-const url_session = "http://127.0.0.1:8000/api/v1/session/"
 
 
 export function getEventSlot(): Promise<EventSlotListResponse> {
-  return fetch(url, {
+  return fetch(`${import.meta.env.VITE_API_URL}/event/slot/`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
   })
     .then(res => {
       if (!res.ok) {
@@ -25,9 +26,10 @@ export function getEventSlot(): Promise<EventSlotListResponse> {
 }
 
 export function getSessions(): Promise<SessionCompleteResponse> {
-  return fetch(url_session, {
+  return fetch(`${import.meta.env.VITE_API_URL}/session/`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
   })
     .then(res => {
       if (!res.ok) {
@@ -43,9 +45,10 @@ export function sendSession(
 ): Promise<SessionSimpleResponse> {
   console.log(JSON.stringify(session, null, 2));
 
-  return fetch(url_session, {
+  return fetch(`${import.meta.env.VITE_API_URL}/session/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(session),
   })
     .then(res => {
@@ -56,14 +59,15 @@ export function sendSession(
     });
 }
 
-export function UpdatedSession(
+export function updateCompleteSession(
   session: SessionUpdate
 ): Promise<SessionSimpleResponse> {
   console.log(JSON.stringify(session, null, 2));
 
-  return fetch(url_session, {
+  return fetch(`${import.meta.env.VITE_API_URL}/session/`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(session),
   })
     .then(res => {
@@ -76,9 +80,10 @@ export function UpdatedSession(
 
 
 export function deleteSessionService(session_id: string): Promise<DeleteSessionResponse> {
-  return fetch(`${url_session}${session_id}`, {
+  return fetch(`${import.meta.env.VITE_API_URL}/session/${session_id}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
   })
     .then(res => {
       if (!res.ok) {

@@ -191,10 +191,21 @@ export type SessionResponse = {
   time_slot_id: string
 }
 
+export type SessionSpeakerResponse = {
+  id: string,
+  title: string,
+  description: string,
+  created_at: string,
+  event_id: string,
+  capacity: number,
+  speaker_id: string,
+  time_slot_id: string
+}
+
 export type SessionCompleteResponse = {
   success: boolean,
   error_message: null,
-  session: SessionResponse[]
+  session: SessionSpeakerResponse[]
 }
 
 export type SessionCreate =

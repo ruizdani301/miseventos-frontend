@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getEventSlot, sendSession, deleteSessionService, getSessions } from "../../services/sessionService"
+import { getEventSlot, sendSession, deleteSessionService, getSessions, updateCompleteSession } from "../../services/sessionService"
 import { getSpeakersAll } from "../../services/speakerService"
 
 import type { EventWithSlots, responseSpeaker } from "../../types/index"
@@ -13,22 +13,11 @@ type SessionData = {
   title: string;
   capacity: string;
   description: string;
-  speaker_id: string;   // ✅ AQUÍ
+  speaker_id: string;
   isDirty?: boolean;
 };
 
-type SessionDataWithSpeaker = {
-  id: string; // ID interno para la vista
-  backendId?: string; // ID asignado por el backend
-  event_id: string;
-  time_slot_id: string;
-  title: string;
-  capacity: string;
-  description: string;
-  speaker: string;
-  isDirty?: boolean;
 
-};
 type SessionFormErrors = {
   event_id?: string;
   time_slot_id?: string;
@@ -39,34 +28,34 @@ type SessionFormErrors = {
 
 
 
-const mockExistingSessions: SessionData[] = [
-  {
-    id: 'session-1',
-    backendId: 'backend-session-1',
-    event_id: 'event-1',
-    time_slot_id: 'slot-1',
-    title: 'Sesión de Apertura',
-    capacity: '100',
-    description: 'Introducción y bienvenida al evento',
+//const mockExistingSessions: SessionData[] = []
+//   {
+//     id: 'session-1',
+//     backendId: 'backend-session-1',
+//     event_id: 'event-1',
+//     time_slot_id: 'slot-1',
+//     title: 'Sesión de Apertura',
+//     capacity: '100',
+//     description: 'Introducción y bienvenida al evento',
 
-    isDirty: false,
-  },
-  {
-    id: 'session-2',
-    backendId: 'backend-session-2',
-    event_id: 'event-1',
-    time_slot_id: 'slot-2',
-    title: 'Workshop Práctico',
-    capacity: '50',
-    description: 'Taller interactivo sobre nuevas tecnologías',
+//     isDirty: false,
+//   },
+//   {
+//     id: 'session-2',
+//     backendId: 'backend-session-2',
+//     event_id: 'event-1',
+//     time_slot_id: 'slot-2',
+//     title: 'Workshop Práctico',
+//     capacity: '50',
+//     description: 'Taller interactivo sobre nuevas tecnologías',
 
-    isDirty: false,
-  },
-];
+//     isDirty: false,
+//   },
+// ];
 
 const SessionForm: React.FC = () => {
   // Estado inicial
-  const [sessions, setSessions] = useState<SessionData[]>(mockExistingSessions);
+  const [sessions, setSessions] = useState<SessionData[]>([]);
   const [events, setEvents] = useState<EventWithSlots[]>([])
   const [errors, setErrors] = useState<Record<string, SessionFormErrors>>({});
   const [reloadSession, setReloadSession] = useState(0)
@@ -143,6 +132,7 @@ const SessionForm: React.FC = () => {
           description: session.description,
           isDirty: false,
         }));
+        console.log(mappedSession);
         setSessions(mappedSession)
         // setReloadSession();
       } catch (err) {
@@ -301,7 +291,7 @@ const SessionForm: React.FC = () => {
         time_slot_id: session.time_slot_id,
         title: session.title.trim(),
         capacity: parseInt(session.capacity),
-        description: session.description.trim() || null,
+        description: session.description.trim() || "",
         speaker_id: session.speaker_id
       }
 
@@ -311,8 +301,8 @@ const SessionForm: React.FC = () => {
           ? { ...s, isDirty: false }
           : s
       ));
-      const response = await updateSession(payload)
-      console.log(`Sesión "${response.title}" actualizada exitosamente`);
+      const response = await updateCompleteSession(payload)
+      console.log(`Sesión "${response.session.title}" actualizada exitosamente`);
     } catch (error) {
       console.error(error)
     }
@@ -350,20 +340,20 @@ const SessionForm: React.FC = () => {
     alert(`Sesión "${session.title}" eliminada del backend`);
   };
 
-  // Limpiar sesión
-  const clearSession = (sessionId: string) => {
-    setSessions(prev => prev.map(session =>
-      session.id === sessionId
-        ? createNewEmptySession()
-        : session
-    ));
+  // // Limpiar sesión
+  // const clearSession = (sessionId: string) => {
+  //   setSessions(prev => prev.map(session =>
+  //     session.id === sessionId
+  //       ? createNewEmptySession()
+  //       : session
+  //   ));
 
-    if (errors[sessionId]) {
-      const newErrors = { ...errors };
-      delete newErrors[sessionId];
-      setErrors(newErrors);
-    }
-  };
+  //   if (errors[sessionId]) {
+  //     const newErrors = { ...errors };
+  //     delete newErrors[sessionId];
+  //     setErrors(newErrors);
+  //   }
+  // };
 
   return (
     <div className="max-w-7xl mx-auto p-4">

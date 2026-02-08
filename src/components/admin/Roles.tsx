@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Edit, Trash2, Shield, Mail, User, Save, X } from 'lucide-react';
+import { UserPlus, Edit, Trash2, Shield, Mail, Save, X } from 'lucide-react';
 import { sendUser, getUsers, updateUser, deleteUser } from '../../services/userService';
 import type { UserListResponse, RoleType, User as UserResponse } from '../../types';
 import { Role } from '../../types';
 
-// interface UserRole {
-//     id: string;
-//     password: string;
-//     email: string;
-//     role: 'admin' | 'assistant';
-// }
 type UserRequest = {
     email: string;
     password: string;

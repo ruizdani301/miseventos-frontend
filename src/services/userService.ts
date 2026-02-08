@@ -1,13 +1,10 @@
 import type { UserCreate, UserUpdate, UserListResponse, DeleteUserResponse } from "../types";
 
-const url = "http://127.0.0.1:8000/api/v1/user/"
-
 export async function sendUser(user: UserCreate): Promise<any> {
     console.log("Sending User Data:", JSON.stringify(user, null, 2));
 
-    const response = await fetch(`${url}register`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/user/register`, {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(user),
     });
@@ -23,7 +20,7 @@ export async function sendUser(user: UserCreate): Promise<any> {
 export async function updateUser(user: UserUpdate): Promise<any> {
     console.log("Updating User Data:", JSON.stringify(user, null, 2));
 
-    const response = await fetch(url, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/user/`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -39,7 +36,7 @@ export async function updateUser(user: UserUpdate): Promise<any> {
 }
 
 export async function getUsers(): Promise<UserListResponse> {
-    const response = await fetch(url, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/user/`, {
         method: "GET",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -54,7 +51,7 @@ export async function getUsers(): Promise<UserListResponse> {
 }
 
 export async function deleteUser(id: string): Promise<DeleteUserResponse> {
-    const response = await fetch(`${url}${id}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/user/${id}`, {
         method: "DELETE",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

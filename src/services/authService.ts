@@ -6,14 +6,11 @@ export type MeResponse = {
     error_message?: string;
 };
 
-const url_login = "http://127.0.0.1:8000/api/v1/login/"
-const url_logout = "http://127.0.0.1:8000/api/v1/logout/"
-const url_verify = "http://127.0.0.1:8000/api/v1/auth/me/"
 
 export async function loginUser(email: string, password?: string): Promise<any> {
     console.log("Attempting Login for:", email, "Password provided:", !!password);
 
-    const response = await fetch(url_login, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -30,7 +27,7 @@ export async function loginUser(email: string, password?: string): Promise<any> 
 
 
 export async function logout(): Promise<LogoutResponse> {
-    const response = await fetch(url_logout, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/logout`, {
         method: "POST",
         credentials: "include",
     });
@@ -42,7 +39,7 @@ export async function logout(): Promise<LogoutResponse> {
 }
 
 export async function validateSession(): Promise<MeResponse> {
-    const response = await fetch(url_verify, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/me/`, {
         method: "GET",
         credentials: "include",
     });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Users, User, Info, CheckCircle, XCircle, MapPin, LogOut, Search } from 'lucide-react';
+import { Clock, Users, CheckCircle, XCircle, LogOut, Search } from 'lucide-react';
 import { getEvents } from '../../services/eventService';
 import type { EventItem, SessionRegister } from '../../types';
 import Pagination from '../common/Pagination';
@@ -97,7 +97,6 @@ const EventDiscovery: React.FC = () => {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
-    // Fetch events when debounced search term or page changes
     useEffect(() => {
         // Reset to page 1 when search term changes
         if (debouncedSearchTerm !== searchTerm) return;
@@ -105,7 +104,6 @@ const EventDiscovery: React.FC = () => {
         fetchEventsData(currentPage, false, debouncedSearchTerm);
     }, [currentPage, debouncedSearchTerm]);
 
-    // Reset to page 1 when search term changes
     useEffect(() => {
         if (currentPage !== 1) {
             setCurrentPage(1);

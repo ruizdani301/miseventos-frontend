@@ -8,16 +8,10 @@ import type {
 } from "../types";
 
 
-
-const url = "http://127.0.0.1:8000/api/v1/event/"
-const urlAll = "http://127.0.0.1:8000/api/v1/event/all/?page=1&limit=10"
-const urlSlot = "http://127.0.0.1:8000/api/v1/event/slot/"
-
-
 export function sendEvents(event: SendEventData) {
   console.log(JSON.stringify(event, null, 2));
 
-  fetch(url, {
+  fetch(`${import.meta.env.VITE_API_URL}/event/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(event),
@@ -29,7 +23,7 @@ export function sendEvents(event: SendEventData) {
 
 export function updateEvents(event: UpdateEventData) {
   console.log(JSON.stringify(event, null, 2));
-  fetch(url, {
+  fetch(`${import.meta.env.VITE_API_URL}/event/`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(event),
@@ -40,7 +34,7 @@ export function updateEvents(event: UpdateEventData) {
 }
 
 export function getEventsAll(): Promise<OnlyEventsResponse> {
-  return fetch(urlAll, {
+  return fetch(`${import.meta.env.VITE_API_URL}/event/all/?page=1&limit=10`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   })
@@ -53,7 +47,7 @@ export function getEventsAll(): Promise<OnlyEventsResponse> {
 }
 
 export function deleteEvents(event_id: string): Promise<DeleteEventsResponse> {
-  return fetch(`http://127.0.0.1:8000/api/v1/event/${event_id}`, {
+  return fetch(`${import.meta.env.VITE_API_URL}/event/${event_id}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
   })
@@ -66,7 +60,7 @@ export function deleteEvents(event_id: string): Promise<DeleteEventsResponse> {
 }
 
 export function getEventsNameSlot(): Promise<EventSlotListResponse> {
-  return fetch(urlSlot, {
+  return fetch(`${import.meta.env.VITE_API_URL}/event/slot/`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   })
@@ -81,7 +75,7 @@ export function getEventsNameSlot(): Promise<EventSlotListResponse> {
 export function getEvents(page: number = 1, limit: number = 10, search?: string): Promise<EventDiscoveryResponse> {
   const newSearch = search?.trim() || "";
 
-  return fetch(`${url}?page=${page}&limit=${limit}&title=${newSearch}`, {
+  return fetch(`${import.meta.env.VITE_API_URL}/event/?page=${page}&limit=${limit}&title=${newSearch}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
