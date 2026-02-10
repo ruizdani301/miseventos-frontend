@@ -31,8 +31,8 @@ const UserLoginForm: React.FC = () => {
 
         setIsLoading(true);
         try {
-            await login(formData.email, formData.password);
-            console.log("Login success");
+            const response = await login(formData.email, formData.password);
+            console.log("Login success", response);
             navigate('/');
         } catch (err: any) {
             setError(err.message || 'Error al iniciar sesión. Verifica tus credenciales.');

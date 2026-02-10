@@ -11,7 +11,7 @@ export async function sendUser(user: UserCreate): Promise<any> {
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error_message || `HTTP error ${response.status}`);
+        throw new Error(errorData.detail || `HTTP error ${response.status}`);
     }
 
     return response.json();
@@ -29,7 +29,7 @@ export async function updateUser(user: UserUpdate): Promise<any> {
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error_message || `HTTP error ${response.status}`);
+        throw new Error(errorData.detail || `HTTP error ${response.status}`);
     }
 
     return response.json();
@@ -44,7 +44,7 @@ export async function getUsers(): Promise<UserListResponse> {
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error_message || `HTTP error ${response.status}`);
+        throw new Error(errorData.detail || `HTTP error ${response.status}`);
     }
 
     return response.json();
@@ -59,7 +59,7 @@ export async function deleteUser(id: string): Promise<DeleteUserResponse> {
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error_message || `HTTP error ${response.status}`);
+        throw new Error(errorData.detail || `HTTP error ${response.status}`);
     }
 
     return response.json();

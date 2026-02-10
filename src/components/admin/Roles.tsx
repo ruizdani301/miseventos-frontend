@@ -62,7 +62,6 @@ const Roles: React.FC = () => {
             setUsers(prev => prev.map(u => u.id === editingId ? { ...u, ...formData } : u));
             setEditingId(null);
             // para enviar a la funcion de edicion
-            alert(JSON.stringify(formData));
             const updated = await updateUser(formData);
             if (updated.success) {
                 console.log('Usuario actualizado exitosamente');

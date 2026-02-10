@@ -422,7 +422,6 @@ const SpeakerForm: React.FC = () => {
               {speaker.backendId && (
                 <div className="mt-4 pt-3 border-t border-gray-100">
                   <div className="text-xs text-gray-500">
-                    <p>ID del backend: <code className="bg-gray-100 px-1 rounded">{speaker.backendId}</code></p>
                     <p className="mt-1">Email: <span className="font-medium">{speaker.email}</span></p>
                   </div>
                 </div>

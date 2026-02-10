@@ -8,64 +8,60 @@ import type {
 } from "../types/index"
 
 
-export function sendSpeaker(
+export async function sendSpeaker(
   speaker: SpeakerCreate
 ): Promise<speakerResponse> {
   console.log(JSON.stringify(speaker, null, 2));
 
-  return fetch(`${import.meta.env.VITE_API_URL}/speaker/`, {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/speaker/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify(speaker),
   })
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(`HTTP error ${res.status}`);
-      }
-      return res.json();
-    });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `HTTP error ${response.status}`);
+  }
+  return response.json();
 }
 
-export function getSpeakersAll(): Promise<speakerListResponse> {
-  return fetch(`${import.meta.env.VITE_API_URL}/speaker/`, {
+export async function getSpeakersAll(): Promise<speakerListResponse> {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/speaker/`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
   })
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(`HTTP error ${res.status}`);
-      }
-      return res.json();
-    });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `HTTP error ${response.status}`);
+  }
+  return response.json();
 }
 
-export function deleteSpeakerService(speaker_id: string): Promise<DeleteSpeakerResponse> {
-  return fetch(`${import.meta.env.VITE_API_URL}/speaker/${speaker_id}`, {
+export async function deleteSpeakerService(speaker_id: string): Promise<DeleteSpeakerResponse> {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/speaker/${speaker_id}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
   })
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(`HTTP error ${res.status}`);
-      }
-      return res.json();
-    });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `HTTP error ${response.status}`);
+  }
+  return response.json();
 }
 
-export function updatepeakerService(speaker: updateRequest): Promise<responseSpeaker> {
-  return fetch(`${import.meta.env.VITE_API_URL}/speaker/`, {
+export async function updatepeakerService(speaker: updateRequest): Promise<responseSpeaker> {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/speaker/`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify(speaker),
   })
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(`HTTP error ${res.status}`);
-      }
-      return res.json();
-    });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `HTTP error ${response.status}`);
+  }
+  return response.json();
 }

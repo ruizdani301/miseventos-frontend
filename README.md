@@ -60,7 +60,7 @@ Si deseas trabajar únicamente en el desarrollo de la interfaz:
 1.  Clona este repositorio:
     ```bash
     git clone https://github.com/ruizdani301/miseventos-frontend .git
-    cd front_miseventos
+    cd miseventos-frontend
     ```
 2.  Instala las dependencias:
     ```bash
