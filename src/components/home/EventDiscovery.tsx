@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Users, CheckCircle, XCircle, LogOut, Search } from 'lucide-react';
-import { getEvents } from '../../services/eventService';
-import type { EventItem, SessionRegister } from '../../types';
-import Pagination from '../common/Pagination';
-import { registerSession, deleteRegisterSession } from '../../services/sessionRegisterService';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import { useAuth } from '../../contexts/AuthContext';
+import { getEvents } from '../../services/eventService';
+import { registerSession, deleteRegisterSession } from '../../services/sessionRegisterService';
+import Pagination from '../common/Pagination';
+
+import type { EventItem, SessionRegister } from '../../types';
+
 
 
 

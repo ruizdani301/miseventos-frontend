@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
-import { sendUser } from '../../services/userService';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+
+import { sendUser } from '../../services/userService';
+
 
 const UserRegistrationForm: React.FC = () => {
     const [formData, setFormData] = useState({

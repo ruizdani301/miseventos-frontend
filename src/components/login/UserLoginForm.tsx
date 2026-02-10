@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, Loader2, LogIn, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+
 import { useAuth } from '../../contexts/AuthContext';
 
 const UserLoginForm: React.FC = () => {

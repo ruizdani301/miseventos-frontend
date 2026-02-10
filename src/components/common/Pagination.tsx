@@ -1,6 +1,6 @@
-import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React from 'react';
 
 interface PaginationProps {
     currentPage: number;

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { sendSchedule, updateSchedule, deleteSchedule as apiDeleteSchedule } from "../../services/scheduleService"
+
 import { getEventsNameSlot } from "../../services/eventService"
+import { sendSchedule, updateSchedule, deleteSchedule as apiDeleteSchedule } from "../../services/scheduleService"
+
 import type { EventWithSlots, SlotTimeRange } from "../../types"
 
 // Definir tipos

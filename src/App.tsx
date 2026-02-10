@@ -1,12 +1,14 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
 import './App.css'
-import AdminPage from './components/layout/AdminPage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import EventDiscovery from './components/home/EventDiscovery';
-import UserRegistrationForm from './components/register/UserRegistrationForm';
+import AdminPage from './components/layout/AdminPage';
 import UserLoginForm from './components/login/UserLoginForm';
+import UserRegistrationForm from './components/register/UserRegistrationForm';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/auth/ProtectedRoute';
+
 
 function App() {
   return (

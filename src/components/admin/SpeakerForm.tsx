@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+
 import { sendSpeaker, getSpeakersAll, deleteSpeakerService, updatepeakerService } from '../../services/speakerService';
 
 // Definir tipos
@@ -247,20 +248,6 @@ const SpeakerForm: React.FC = () => {
     }
   };
 
-  // // Limpiar speaker
-  // const clearSpeaker = (speakerId: string) => {
-  //   setSpeakers(prev => prev.map(speaker =>
-  //     speaker.id === speakerId
-  //       ? createNewEmptySpeaker()
-  //       : speaker
-  //   ));
-
-  //   if (errors[speakerId]) {
-  //     const newErrors = { ...errors };
-  //     delete newErrors[speakerId];
-  //     setErrors(newErrors);
-  //   }
-  // };
 
   return (
     <div className="max-w-7xl mx-auto p-4">
@@ -429,21 +416,6 @@ const SpeakerForm: React.FC = () => {
                   Eliminar
                 </button>
 
-                {/* <button
-                  type="button"
-                  onClick={() => clearSpeaker(speaker.id)}
-                  disabled={!speaker.full_name && !speaker.email && !speaker.bio}
-                  className={`py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${
-                    !speaker.full_name && !speaker.email && !speaker.bio
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                      : 'bg-gray-500 text-white hover:bg-gray-600'
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Limpiar
-                </button> */}
               </div>
 
               {/* Información del speaker */}

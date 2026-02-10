@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Menu,
@@ -10,6 +9,7 @@ import {
     ChevronLeft,
     Search
 } from 'lucide-react';
+import React from 'react';
 
 interface SidebarProps {
     activeTab: string;

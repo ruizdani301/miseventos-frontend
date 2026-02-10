@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
 import { UserPlus, Edit, Trash2, Shield, Mail, Save, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+
 import { sendUser, getUsers, updateUser, deleteUser } from '../../services/userService';
-import type { UserListResponse, RoleType, User as UserResponse } from '../../types';
 import { Role } from '../../types';
+
+import type { UserListResponse, RoleType, User as UserResponse } from '../../types';
 
 type UserRequest = {
     email: string;

@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { UserAuthResponse } from '../types';
+
 import { loginUser, logout as logoutSrv, validateSession } from '../services/authService';
+
+import type { UserAuthResponse } from '../types';
 
 interface AuthContextType {
     user: UserAuthResponse | null;

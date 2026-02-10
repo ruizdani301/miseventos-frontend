@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+
 import Sidebar from './Sidebar';
-import ScheduleForm from '../admin/ScheduleForm';
 import CreatedEvent from '../admin/CreatedEvent';
-import SpeakerForm from '../admin/SpeakerForm';
-import SessionForm from '../admin/SessionForm';
 import Roles from '../admin/Roles';
+import ScheduleForm from '../admin/ScheduleForm';
+import SessionForm from '../admin/SessionForm';
+import SpeakerForm from '../admin/SpeakerForm';
 import EventDiscovery from '../home/EventDiscovery';
 
 const AdminPage: React.FC = () => {

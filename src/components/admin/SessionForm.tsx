@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+
 import { getEventSlot, sendSession, deleteSessionService, getSessions, updateCompleteSession } from "../../services/sessionService"
 import { getSpeakersAll } from "../../services/speakerService"
 
@@ -340,20 +341,6 @@ const SessionForm: React.FC = () => {
     alert(`Sesión "${session.title}" eliminada del backend`);
   };
 
-  // // Limpiar sesión
-  // const clearSession = (sessionId: string) => {
-  //   setSessions(prev => prev.map(session =>
-  //     session.id === sessionId
-  //       ? createNewEmptySession()
-  //       : session
-  //   ));
-
-  //   if (errors[sessionId]) {
-  //     const newErrors = { ...errors };
-  //     delete newErrors[sessionId];
-  //     setErrors(newErrors);
-  //   }
-  // };
 
   return (
     <div className="max-w-7xl mx-auto p-4">
